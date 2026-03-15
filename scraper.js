@@ -1,56 +1,117 @@
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 
+const parseFloatSafe = (str) => {
+    if (typeof str !== 'string') return null;
+    const num = parseFloat(str.replace('%', ''));
+    return isNaN(num) ? null : num;
+};
+
+const parseIntSafe = (str) => {
+    if (typeof str !== 'string') return null;
+    const num = parseInt(str, 10);
+    return isNaN(num) ? null : num;
+};
+
 async function scrapeRaceCard(venue, kaisaiId, day, raceNo) {
   const url = `https://www.winticket.jp/autorace/${venue}/racecard/${kaisaiId}/${day}/${raceNo}`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 ar-proxy/1.0 (autorace prediction tool; https://github.com/Jiz41/ar-proxy)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ja,en;q=0.9',
+        'X-Platform-Type': 'web'
+      }
+    });
+
     if (!response.ok) {
       return { error: `Failed to fetch data: ${response.statusText}` };
     }
+
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    const nuxtDataScript = $('script:contains("window.__NUXT__")').html();
-    if (!nuxtDataScript) {
-        return { error: 'Could not find __NUXT__ data.' };
+    const bodyText = $('body').text();
+    const condMatch = bodyText.match(/(良走路|湿走路|斑走路)/);
+    condition = condMatch ? condMatch[1] : null;
+
+    const riders = [];
+    const tableRows = $('table').eq(1).find('tr');
+
+    for (let i = 2; i < tableRows.length; i += 2) {
+      const mainRow = tableRows.eq(i);
+      const subRow = tableRows.eq(i + 1);
+
+      if (!mainRow.length || !subRow.length) continue;
+
+      const mainCells = mainRow.find('td');
+      const subCells = subRow.find('td');
+
+      const carNum = parseIntSafe($(mainCells[0]).text().trim());
+
+      const nameStr = $(mainCells[1]).text().trim();
+      const nameMatch = nameStr.match(/^(.+?)(\d+)期\s*(\d+)歳\s*(.+)$/);
+      const name = nameMatch ? nameMatch[1] : nameStr;
+      const period = nameMatch ? parseIntSafe(nameMatch[2]) : null;
+      const age = nameMatch ? parseIntSafe(nameMatch[3]) : null;
+      const base = nameMatch ? nameMatch[4] : null;
+
+      const handicapStr = $(mainCells[2]).text().trim();
+      const [handicapVal, stVal] = handicapStr.split('m');
+      const handicap = parseIntSafe(handicapVal);
+      const st = parseFloatSafe(stVal);
+
+      const trialStr = $(mainCells[3]).text().trim().replace(/\s/g, '');
+      const trialMatch = trialStr.match(/^(\d+\.\d+)(\d+\.\d+)$/);
+      const trialTime = trialMatch ? parseFloatSafe(trialMatch[1]) : parseFloatSafe(trialStr);
+      const deviation = trialMatch ? parseFloatSafe(trialMatch[2]) : null;
+
+      const auditStr = $(mainCells[4]).text().trim();
+      const auditMatch = auditStr.match(/([\d.]+)([A-Z]+-\d+)\((.*)\)/);
+      const auditPoint = auditMatch ? parseFloatSafe(auditMatch[1]) : null;
+      const auditRankCurrent = auditMatch ? auditMatch[2] : null;
+      const auditRankPrev = auditMatch ? auditMatch[3] : null;
+
+      const win1_10 = parseIntSafe($(mainCells[7]).text().trim());
+      const win2_10 = parseIntSafe($(mainCells[8]).text().trim());
+      const win3_10 = parseIntSafe($(mainCells[9]).text().trim());
+      const out_10 = parseIntSafe($(mainCells[10]).text().trim());
+
+      const avgTrialTimeStr = $(mainCells[11]).text().trim();
+      const avgTrialTime = avgTrialTimeStr === '-' ? null : parseFloatSafe(avgTrialTimeStr);
+
+      const rate90_2 = parseFloatSafe($(mainCells[14]).text().trim());
+      const rate90_3 = parseFloatSafe($(mainCells[15]).text().trim());
+      const rateGood_2 = parseFloatSafe($(mainCells[16]).text().trim());
+      const rateGood_3 = parseFloatSafe($(mainCells[17]).text().trim());
+      const rateWet_2 = parseFloatSafe($(mainCells[18]).text().trim());
+      const rateWet_3 = parseFloatSafe($(mainCells[19]).text().trim());
+
+      const prev10_stats = $(subCells[0]).text().trim().split('-').map(s => parseIntSafe(s));
+      const good_stats = $(subCells[1]).text().trim().split('-').map(s => parseIntSafe(s));
+      const wet_stats = $(subCells[2]).text().trim().split('-').map(s => parseIntSafe(s));
+
+      riders.push({
+        carNum, name, period, age, base, handicap, st, trialTime, deviation,
+        auditPoint, auditRankCurrent, auditRankPrev,
+        win1_10, win2_10, win3_10, out_10, avgTrialTime,
+        rate90_2, rate90_3, rateGood_2, rateGood_3, rateWet_2, rateWet_3,
+        history: {
+            prev10: { w1: prev10_stats[0], w2: prev10_stats[1], w3: prev10_stats[2], out: prev10_stats[3] },
+            good: { w1: good_stats[0], w2: good_stats[1], w3: good_stats[2], out: good_stats[3] },
+            wet: { w1: wet_stats[0], w2: wet_stats[1], w3: wet_stats[2], out: wet_stats[3] },
+        }
+      });
     }
 
-    const nuxtData = JSON.parse(nuxtDataScript.match(/window\.__NUXT__=([^;]*);/)[1]);
-
-    const race = nuxtData.data[0].race;
-    const riders = race.raceCardRiders.map(rider => ({
-        carNum: rider.carNum,
-        name: rider.rider.name,
-        base: rider.rider.branch.name,
-        period: rider.rider.period,
-        age: rider.rider.age,
-        handicap: rider.handicap,
-        st: rider.st,
-        trialTime: rider.trialTime,
-        deviation: rider.deviation,
-        auditPoint: rider.auditPoint,
-        auditRankCurrent: rider.auditRankCurrent,
-        auditRankPrev: rider.auditRankPrev,
-        win1_10: rider.win1_10,
-        win2_10: rider.win2_10,
-        win3_10: rider.win3_10,
-        out_10: rider.out_10,
-        rate90_2: rider.rate90_2,
-        rate90_3: rider.rate90_3,
-        rateGood_2: rider.rateGood_2,
-        rateGood_3: rider.rateGood_3,
-        rateWet_2: rider.rateWet_2,
-        rateWet_3: rider.rateWet_3,
-    }));
-
     return {
-      venue: race.venue.key,
-      kaisaiId: race.kaisaiId,
-      day: race.day,
-      raceNo: race.raceNo,
-      condition: race.condition.name,
+      venue,
+      kaisaiId,
+      day: parseInt(day, 10),
+      raceNo: parseInt(raceNo, 10),
+      condition,
       riders,
     };
   } catch (error) {
@@ -58,16 +119,12 @@ async function scrapeRaceCard(venue, kaisaiId, day, raceNo) {
   }
 }
 
-// This part is for command line execution
 (async () => {
-    // process.argv will be: ['node', 'scraper.js', 'venue', 'kaisaiId', 'day', 'raceNo']
     const [,, venue, kaisaiId, day, raceNo] = process.argv;
-
     if (venue && kaisaiId && day && raceNo) {
       const data = await scrapeRaceCard(venue, kaisaiId, day, raceNo);
       console.log(JSON.stringify(data, null, 2));
     }
 })();
 
-// For use in other files
 module.exports = { scrapeRaceData: scrapeRaceCard };
