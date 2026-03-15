@@ -16,7 +16,13 @@ app.get('/race', async (req, res) => {
     if (data.error) {
         res.status(500).json(data);
     } else {
-        res.json(data);
+        // ご要望通り、recentRaces が含まれていない場合は、data オブジェクト全体を返します。
+        // 含まれている場合は、`recentRaces` のみを返すように変更します。
+        if ('recentRaces' in data) {
+            res.json(data.recentRaces);
+        } else {
+            res.json(data);
+        }
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
