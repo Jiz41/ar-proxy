@@ -10,16 +10,6 @@ const VENUE_MAP = {
   '山陽': 'sanyo',
 };
 
-// Simple helper to get the English venue ID from a string that might contain the Japanese name
-const getVenueId = (name) => {
-    for (const [key, value] of Object.entries(VENUE_MAP)) {
-        if (name.includes(key)) {
-            return value;
-        }
-    }
-    return null;
-}
-
 async function getKaisaiInfo(date) {
   const url = 'https://www.winticket.jp/autorace/racecard';
   const options = {
@@ -33,54 +23,22 @@ async function getKaisaiInfo(date) {
     const body = await response.text();
     const $ = cheerio.load(body);
 
-    const venues = [];
+    const venues = {};
 
-    $('div.p-raceCard-venues-list-item').each((i, el) => {
-      const venueElement = $(el);
-
-      const venueName = venueElement.find('p.p-raceCard-venues-list-item__name').text();
-      const venueId = getVenueId(venueName);
-      
-      if (!venueId) {
-        return; // Skip if venue not found in our map
+    $('a[href*="/autorace/"][href*="/racecard/"]').each((i, el) => {
+      const href = $(el).attr('href');
+      const match = href.match(/\/autorace\/(\w+)\/racecard\/(\d+)\/(\d+)\/(\d+)/);
+      if (!match) return;
+      const [, venueSlug, kaisaiId, day, raceNo] = match;
+      const validSlugs = Object.values(VENUE_MAP);
+      if (!validSlugs.includes(venueSlug)) return;
+      if (!venues[venueSlug]) {
+        venues[venueSlug] = { venue: venueSlug, kaisaiId, day: parseInt(day, 10), races: [] };
       }
-      
-      const races = [];
-      let kaisaiId = null;
-      let day = null;
-
-      venueElement.find('a.p-raceCard-race-list-item').each((j, raceEl) => {
-        const raceLink = $(raceEl).attr('href');
-        const raceNumberText = $(raceEl).find('p.p-raceCard-race-list-item__number').text();
-        const raceNumberMatch = raceNumberText.match(/(\d+)/);
-
-        if (raceNumberMatch) {
-            races.push(parseInt(raceNumberMatch[1], 10));
-        }
-
-        if (!kaisaiId && raceLink) {
-            const match = raceLink.match(/\/racecard\/(\d+)\/(\d+)\/\d+/);
-            if (match) {
-              kaisaiId = match[1];
-              day = parseInt(match[2], 10);
-            }
-        }
-      });
-
-      if (kaisaiId) {
-        venues.push({
-          venue: venueId,
-          kaisaiId: kaisaiId,
-          day: day,
-          races: races,
-        });
-      }
+      venues[venueSlug].races.push(parseInt(raceNo, 10));
     });
 
-    return {
-      date: date,
-      venues: venues,
-    };
+    return { date, venues: Object.values(venues) };
   } catch (error) {
     console.error('Error scraping kaisai info:', error);
     // In case of an error, it's better to return an empty list than to crash
