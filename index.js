@@ -1,9 +1,12 @@
 const express = require('express');
 const { scrapeRaceData } = require('./scraper');
 const { getKaisaiInfo } = require('./kaisai');
+const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(cors());
 
 app.get('/race', async (req, res) => {
   const { venue, kaisaiId, day, raceNo } = req.query;
