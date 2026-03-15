@@ -70,4 +70,4 @@ async function scrapeRaceCard(venue, kaisaiId, day, raceNo) {
 })();
 
 // For use in other files
-module.exports = scrapeRaceCard;
+module.exports = { scrapeRaceData: scrapeRaceCard };
