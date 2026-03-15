@@ -1,5 +1,6 @@
 const express = require('express');
 const { scrapeRaceData } = require('./scraper');
+const { getKaisaiInfo } = require('./kaisai');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,6 +19,21 @@ app.get('/race', async (req, res) => {
     } else {
         res.json(data);
     }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/kaisai', async (req, res) => {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ error: 'date is required' });
+  }
+
+  try {
+    const data = await getKaisaiInfo(date);
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
