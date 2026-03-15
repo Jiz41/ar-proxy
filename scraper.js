@@ -1,35 +1,73 @@
-const puppeteer = require('puppeteer');
+const fetch = require('node-fetch');
+const cheerio = require('cheerio');
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function scrapeRaceCard(venue, kaisaiId, day, raceNo) {
+  const url = `https://www.winticket.jp/autorace/${venue}/racecard/${kaisaiId}/${day}/${raceNo}`;
 
-const VENUES = ['kawaguchi', 'isesaki', 'hamamatsu', 'iizuka', 'sanyou'];
-
-async function fetchText(url) {
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
   try {
-    const page = await browser.newPage();
-    await page.setUserAgent('PoliteArBot/1.0 (on-demand only, no flood; say the word and I vanish; DM: https://x.com/kayoutouidou01)');
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-    const text = await page.evaluate(() => document.body.innerText);
-    return text;
-  } finally {
-    await browser.close();
+    const response = await fetch(url);
+    if (!response.ok) {
+      return { error: `Failed to fetch data: ${response.statusText}` };
+    }
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const nuxtDataScript = $('script:contains("window.__NUXT__")').html();
+    if (!nuxtDataScript) {
+        return { error: 'Could not find __NUXT__ data.' };
+    }
+
+    const nuxtData = JSON.parse(nuxtDataScript.match(/window\.__NUXT__=([^;]*);/)[1]);
+
+    const race = nuxtData.data[0].race;
+    const riders = race.raceCardRiders.map(rider => ({
+        carNum: rider.carNum,
+        name: rider.rider.name,
+        base: rider.rider.branch.name,
+        period: rider.rider.period,
+        age: rider.rider.age,
+        handicap: rider.handicap,
+        st: rider.st,
+        trialTime: rider.trialTime,
+        deviation: rider.deviation,
+        auditPoint: rider.auditPoint,
+        auditRankCurrent: rider.auditRankCurrent,
+        auditRankPrev: rider.auditRankPrev,
+        win1_10: rider.win1_10,
+        win2_10: rider.win2_10,
+        win3_10: rider.win3_10,
+        out_10: rider.out_10,
+        rate90_2: rider.rate90_2,
+        rate90_3: rider.rate90_3,
+        rateGood_2: rider.rateGood_2,
+        rateGood_3: rider.rateGood_3,
+        rateWet_2: rider.rateWet_2,
+        rateWet_3: rider.rateWet_3,
+    }));
+
+    return {
+      venue: race.venue.key,
+      kaisaiId: race.kaisaiId,
+      day: race.day,
+      raceNo: race.raceNo,
+      condition: race.condition.name,
+      riders,
+    };
+  } catch (error) {
+    return { error: error.message };
   }
 }
 
-async function scrapeRace(venue, date, raceNo) {
-  if (!VENUES.includes(venue)) throw new Error('Invalid venue: ' + venue);
+// This part is for command line execution
+(async () => {
+    // process.argv will be: ['node', 'scraper.js', 'venue', 'kaisaiId', 'day', 'raceNo']
+    const [,, venue, kaisaiId, day, raceNo] = process.argv;
 
-  const base = `https://autorace.jp/race_info/Live/${venue}/Program/${date}_${raceNo}`;
+    if (venue && kaisaiId && day && raceNo) {
+      const data = await scrapeRaceCard(venue, kaisaiId, day, raceNo);
+      console.log(JSON.stringify(data, null, 2));
+    }
+})();
 
-  const program  = await fetchText(`${base}/program`);  await sleep(1000);
-  const recent10 = await fetchText(`${base}/recent10`); await sleep(1000);
-  const good5    = await fetchText(`${base}/good5`);    await sleep(1000);
-  const wet5     = await fetchText(`${base}/wet5`);
-
-  return { venue, date, raceNo, program, recent10, good5, wet5 };
-}
-
-module.exports = { scrapeRace };
+// For use in other files
+module.exports = scrapeRaceCard;
