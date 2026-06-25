@@ -257,7 +257,8 @@ def build_player_stats(races):
 
 def compute_player_rain_flags(player_wet_orders, player_dry_orders):
     """
-    雨天3レース以上 かつ (良走路平均着順 − 湿走路平均着順) >= 0.5 → rainFlag=1
+    フォールバック用: 雨天3レース以上 かつ (良走路平均着順 − 湿走路平均着順) >= 0.5 → rainFlag=1
+    sunnyOrder/rainyOrder が利用可能な場合はこちらは使われない。
     """
     flags = {}
     for pid in set(player_wet_orders) | set(player_dry_orders):
@@ -270,6 +271,17 @@ def compute_player_rain_flags(player_wet_orders, player_dry_orders):
         dry_avg = sum(dry) / len(dry) if dry else 4.5
         flags[pid] = 1 if (dry_avg - wet_avg) >= 0.5 else 0
     return flags
+
+
+def rain_flag_from_orders(sunny_order, rainy_order):
+    """
+    sunnyOrder/rainyOrder から直接 rainFlag を計算する。
+    rainyOrder < sunnyOrder（雨天の方が期待順位が高い）→ 1
+    いずれかが 0（データなし）→ 0
+    """
+    if sunny_order > 0 and rainy_order > 0:
+        return 1 if rainy_order < sunny_order else 0
+    return 0
 
 
 def build_observations(races, player_avg_trial=None, player_rain_flags=None):
@@ -326,7 +338,13 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None):
             hIndex = r.get("handicap", 0) - trial * 1000
             avg_trial = player_avg_trial.get(pid, 0)
             trial_dev = (trial / avg_trial) if avg_trial > 0 else 1.0
-            rain_flag = float(player_rain_flags.get(pid, 0))
+            # sunnyOrder/rainyOrder が存在すればそちらを優先、なければ統計フォールバック
+            sunny = r.get("sunnyOrder", 0)
+            rainy = r.get("rainyOrder", 0)
+            if sunny > 0 or rainy > 0:
+                rain_flag = float(rain_flag_from_orders(sunny, rainy))
+            else:
+                rain_flag = float(player_rain_flags.get(pid, 0))
             valid.append({
                 "race_key": race_key,
                 "playerId": pid,
@@ -578,7 +596,7 @@ def print_results(
     print(f"  w5 (trialDev):  {w5:.2f}  ← 変更前: 1.0")
     print(f"  w6 (homeFlag):  {w6:.2f}  ← 変更前: 1.0")
     print(f"  w7 (rainFlag):  {w7:.2f}  ← 変更前: 1.0  （雨天{wet_race_count}件）")
-    print(f"  w2: raceresultにdeviation情報なし・1.0維持")
+    print(f"  w2 (deviation): {w5:.2f}  ← w5と同値（試走乖離率の別ソース・同義）")
     print()
 
     print("[雨天レース傾向]")
@@ -625,7 +643,7 @@ def save_json(
         "holdout_rmse": round(holdout_rmse, 4) if not math.isnan(holdout_rmse) else None,
         "recommended_weights": {
             "w1": round(w1, 2),
-            "w2": 1.0,
+            "w2": round(w5, 2),  # w2とw5は同じ試走乖離率を測るため同値を適用
             "w3": round(w3, 2),
             "w4": round(w4, 2),
             "w5": round(w5, 2),
@@ -662,7 +680,13 @@ def main():
     player_avg_trial, player_wet_orders, player_dry_orders = build_player_stats(races)
     player_rain_flags = compute_player_rain_flags(player_wet_orders, player_dry_orders)
     rain_strong_count = sum(player_rain_flags.values())
+    # sunnyOrder/rainyOrder の有無を確認
+    sunny_available = sum(
+        1 for race in races for r in race.get("results", [])
+        if r.get("sunnyOrder", 0) > 0 or r.get("rainyOrder", 0) > 0
+    )
     print(f"  選手数: 試走T平均算出={len(player_avg_trial)}名, 雨強フラグ={rain_strong_count}名")
+    print(f"  sunnyOrder/rainyOrder付きエントリ: {sunny_available}件")
 
     # 3. 前処理・フラット化
     observations, race_groups, excluded_count, wet_race_count, total_raw = build_observations(

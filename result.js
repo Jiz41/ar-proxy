@@ -117,11 +117,15 @@ async function getResultData(venue, kaisaiId, day, raceNo) {
 
   const { results, race, entries, players } = data;
 
-  // playerId → carNum のマップ（entries から）
+  // playerId → { number, sunnyOrder, rainyOrder } のマップ（entries から）
   const entryMap = {};
   if (Array.isArray(entries)) {
     for (const e of entries) {
-      entryMap[String(e.playerId)] = e.number;
+      entryMap[String(e.playerId)] = {
+        number:     e.number,
+        sunnyOrder: e.sunnyOrder ?? 0,
+        rainyOrder: e.rainyOrder ?? 0,
+      };
     }
   }
 
@@ -140,11 +144,12 @@ async function getResultData(venue, kaisaiId, day, raceNo) {
   const formattedResults = results.map(r => {
     const pid = String(r.playerId);
     const player = playerMap[pid] || {};
+    const entry  = entryMap[pid]  || {};
     const homeFlag =
       venueId && player.lockerGroundVenueId === venueId ? 1 : 0;
 
     return {
-      carNum:               entryMap[pid] || null,
+      carNum:               entry.number || null,
       playerId:             pid,
       order:                r.order,
       handicap:             r.handicap,
@@ -153,6 +158,8 @@ async function getResultData(venue, kaisaiId, day, raceNo) {
       recommendationPoint:  r.recommendationPoint,
       record:               r.record,
       homeFlag,
+      sunnyOrder:           entry.sunnyOrder ?? 0,
+      rainyOrder:           entry.rainyOrder ?? 0,
     };
   });
 
