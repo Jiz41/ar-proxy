@@ -596,7 +596,7 @@ def print_results(
     print(f"  w5 (trialDev):  {w5:.2f}  ← 変更前: 1.0")
     print(f"  w6 (homeFlag):  {w6:.2f}  ← 変更前: 1.0")
     print(f"  w7 (rainFlag):  {w7:.2f}  ← 変更前: 1.0  （雨天{wet_race_count}件）")
-    print(f"  w2 (deviation): {w5:.2f}  ← w5と同値（試走乖離率の別ソース・同義）")
+    print(f"  w2: 廃止（w5に一本化）")
     print()
 
     print("[雨天レース傾向]")
@@ -643,7 +643,6 @@ def save_json(
         "holdout_rmse": round(holdout_rmse, 4) if not math.isnan(holdout_rmse) else None,
         "recommended_weights": {
             "w1": round(w1, 2),
-            "w2": round(w5, 2),  # w2とw5は同じ試走乖離率を測るため同値を適用
             "w3": round(w3, 2),
             "w4": round(w4, 2),
             "w5": round(w5, 2),

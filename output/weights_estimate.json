@@ -21,7 +21,6 @@
   "holdout_rmse": 2.0974,
   "recommended_weights": {
     "w1": 1.0,
-    "w2": 0.17,
     "w3": 0.07,
     "w4": 0.41,
     "w5": 0.17,
