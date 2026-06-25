@@ -160,6 +160,7 @@ async function getResultData(venue, kaisaiId, day, raceNo) {
       homeFlag,
       sunnyOrder:           entry.sunnyOrder ?? 0,
       rainyOrder:           entry.rainyOrder ?? 0,
+      changeVehicle:        r.changeVehicle === true ? 1 : 0,
     };
   });
 

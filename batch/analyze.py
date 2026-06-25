@@ -118,20 +118,25 @@ def mat_inv(A):
     return mat_transpose(inv)
 
 
-def ols_solve(X, y):
+def ols_solve(X, y, ridge=1e-3):
     """
-    正規方程式 β = (X^T X)^{-1} X^T y を解く。
+    Ridge正規方程式 β = (X^T X + λI)^{-1} X^T y を解く。
+    near-zero variance 列（changeVehicle等）による特異行列を回避するため
+    λ=1e-3 のデフォルトRidge罰則を使用する。
     X: list[list[float]]  (n x p)
     y: list[float]        (n,)
     戻り値: β list[float] (p,)
     """
     Xt = mat_transpose(X)
-    XtX = mat_mul(Xt, [[v] for v in y])  # X^T y (p x 1) — 一旦後で
     # X^T X
     XtX_sq = mat_mul(Xt, X)  # (p x p)
+    # Ridge: X^T X + λI
+    p = len(XtX_sq)
+    for i in range(p):
+        XtX_sq[i][i] += ridge
     # X^T y
     Xty = mat_vec_mul(Xt, y)  # (p,)
-    # β = (X^T X)^{-1} X^T y
+    # β = (X^T X + λI)^{-1} X^T y
     XtX_inv = mat_inv(XtX_sq)
     beta = mat_vec_mul(XtX_inv, Xty)
     return beta
@@ -220,6 +225,47 @@ def load_races(pattern="output/*.jsonl"):
     return races
 
 
+def stdev(vals):
+    """不偏標準偏差（n>=2のみ、それ以外は0.0）"""
+    n = len(vals)
+    if n < 2:
+        return 0.0
+    m = sum(vals) / n
+    return math.sqrt(sum((v - m) ** 2 for v in vals) / (n - 1))
+
+
+def build_day1_trial_map(races):
+    """
+    day=1 の試走タイムを {(kaisaiId, playerId): trialRecord} でマップ化。
+    w9（車両劣化）の基準値として使用。
+    """
+    d1_map = {}
+    for race in races:
+        if race.get("day", 1) != 1:
+            continue
+        for r in race.get("results", []):
+            pid = r.get("playerId", "")
+            trial = r.get("trialRecord", 0)
+            if pid and trial > 0:
+                d1_map[(race["kaisaiId"], pid)] = trial
+    return d1_map
+
+
+def compute_player_st_stds(races):
+    """
+    選手ごとの startTiming 標準偏差を算出（w10 近似値）。
+    全収集レースの ST を使う（/race recentRaces の代替）。
+    """
+    player_sts = {}
+    for race in races:
+        for r in race.get("results", []):
+            pid = r.get("playerId", "")
+            st = r.get("startTiming")
+            if pid and st is not None and st > 0:
+                player_sts.setdefault(pid, []).append(st)
+    return {pid: stdev(vals) for pid, vals in player_sts.items()}
+
+
 def build_player_stats(races):
     """
     全レースから選手ごとの試走T平均・雨天/良走路着順リストを構築する。
@@ -284,7 +330,8 @@ def rain_flag_from_orders(sunny_order, rainy_order):
     return 0
 
 
-def build_observations(races, player_avg_trial=None, player_rain_flags=None):
+def build_observations(races, player_avg_trial=None, player_rain_flags=None,
+                       day1_trial_map=None, player_st_stds=None):
     """
     レースリストから選手観測の flat リストとレース単位の情報を生成する。
 
@@ -301,6 +348,10 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None):
         player_avg_trial = {}
     if player_rain_flags is None:
         player_rain_flags = {}
+    if day1_trial_map is None:
+        day1_trial_map = {}
+    if player_st_stds is None:
+        player_st_stds = {}
     observations = []
     race_groups = {}
     excluded_count = 0
@@ -345,6 +396,18 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None):
                 rain_flag = float(rain_flag_from_orders(sunny, rainy))
             else:
                 rain_flag = float(player_rain_flags.get(pid, 0))
+
+            # w8: 乗り換え車両補正
+            change_vehicle = float(r.get("changeVehicle", 0))
+
+            # w9: 車両劣化（day1基準の試走タイム差）
+            day_num = race.get("day", 1)
+            d1_trial = day1_trial_map.get((race["kaisaiId"], pid), 0)
+            day_prog = (trial - d1_trial) if (day_num > 1 and d1_trial > 0) else 0.0
+
+            # w10: ST標準偏差（再現性リスク）
+            st_std = player_st_stds.get(pid, 0.0)
+
             valid.append({
                 "race_key": race_key,
                 "playerId": pid,
@@ -355,6 +418,9 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None):
                 "homeFlag": float(r.get("homeFlag", 0)),
                 "trialDev": trial_dev,
                 "rainFlag": rain_flag,
+                "changeVehicle": change_vehicle,
+                "dayProg": day_prog,
+                "stStd": st_std,
                 "is_wet": is_wet,
             })
 
@@ -386,8 +452,9 @@ def normalize_within_races(observations, race_groups):
 
     各観測に norm_ プレフィックスでフィールドを追加（in-place）。
     """
-    FACTORS = ["hIndex", "startTiming", "recommendationPoint", "trialDev"]
-    INVERT = {"hIndex": True, "startTiming": True, "recommendationPoint": False, "trialDev": True}
+    FACTORS = ["hIndex", "startTiming", "recommendationPoint", "trialDev", "dayProg", "stStd"]
+    INVERT = {"hIndex": True, "startTiming": True, "recommendationPoint": False,
+              "trialDev": True, "dayProg": True, "stStd": True}
 
     for idxs in race_groups.values():
         for factor in FACTORS:
@@ -405,10 +472,11 @@ def normalize_within_races(observations, race_groups):
                     norm = 1.0 - norm
                 observations[i][f"norm_{factor}"] = norm
 
-    # homeFlag / rainFlag はバイナリなので正規化しない
+    # バイナリ値はそのまま（レース内正規化不要）
     for obs in observations:
-        obs["norm_homeFlag"] = obs["homeFlag"]
-        obs["norm_rainFlag"] = obs["rainFlag"]
+        obs["norm_homeFlag"]      = obs["homeFlag"]
+        obs["norm_rainFlag"]      = obs["rainFlag"]
+        obs["norm_changeVehicle"] = obs["changeVehicle"]
 
 
 # ---------------------------------------------------------------------------
@@ -421,12 +489,15 @@ def compute_spearman(observations):
     戻り値: dict[factor_name -> corr]
     """
     factor_keys = [
-        ("hIndex_score",   "norm_hIndex"),
-        ("ST_score",       "norm_startTiming"),
-        ("recPoint_score", "norm_recommendationPoint"),
-        ("homeFlag",       "norm_homeFlag"),
-        ("trialDev_score", "norm_trialDev"),
-        ("rainFlag",       "norm_rainFlag"),
+        ("hIndex_score",     "norm_hIndex"),
+        ("ST_score",         "norm_startTiming"),
+        ("recPoint_score",   "norm_recommendationPoint"),
+        ("homeFlag",         "norm_homeFlag"),
+        ("trialDev_score",   "norm_trialDev"),
+        ("rainFlag",         "norm_rainFlag"),
+        ("changeVehicle",    "norm_changeVehicle"),
+        ("dayProg_score",    "norm_dayProg"),
+        ("stStd_score",      "norm_stStd"),
     ]
     orders = [obs["order"] for obs in observations]
     results = {}
@@ -448,8 +519,14 @@ FEATURE_KEYS = [
     "norm_homeFlag",
     "norm_trialDev",
     "norm_rainFlag",
+    "norm_changeVehicle",
+    "norm_dayProg",
+    "norm_stStd",
 ]
-FEATURE_LABELS = ["hIndex", "ST", "recPoint", "homeFlag", "trialDev", "rainFlag"]
+FEATURE_LABELS = [
+    "hIndex", "ST", "recPoint", "homeFlag", "trialDev",
+    "rainFlag", "changeVehicle", "dayProg", "stStd",
+]
 
 
 def build_XY(observations):
@@ -500,14 +577,14 @@ def compute_holdout_rmse(observations, race_groups, holdout_ratio=0.2, seed=42):
 def beta_to_weights(beta):
     """
     回帰係数 β → RONDE 形式 weights（max=1.0 正規化）。
-    beta は [hIndex, ST, recPoint, homeFlag, trialDev, rainFlag] の順。
-    各因子の寄与度（絶対値）を最大値で正規化する。
-    戻り値: [w1, w3, w4, w6, w5, w7] の順
+    beta は [hIndex, ST, recPoint, homeFlag, trialDev, rainFlag,
+             changeVehicle, dayProg, stStd] の順。
+    戻り値: [w1, w3, w4, w6, w5, w7, w8, w9, w10] の順
     """
     abs_beta = [abs(b) for b in beta]
     max_b = max(abs_beta) if max(abs_beta) > 1e-12 else 1.0
     normalized = [b / max_b for b in abs_beta]
-    return normalized  # indices: 0=w1, 1=w3, 2=w4, 3=w6, 4=w5, 5=w7
+    return normalized  # 0=w1,1=w3,2=w4,3=w6,4=w5,5=w7,6=w8,7=w9,8=w10
 
 
 # ---------------------------------------------------------------------------
@@ -576,6 +653,9 @@ def print_results(
         ("homeFlag",       spearman["homeFlag"],        "negative", "地元有利"),
         ("trialDev_score", spearman["trialDev_score"],  "negative", "試走乖離が低いほど上位"),
         ("rainFlag",       spearman["rainFlag"],        "negative", "雨強選手が上位"),
+        ("changeVehicle",  spearman["changeVehicle"],   "negative", "乗り換え車両が不利"),
+        ("dayProg_score",  spearman["dayProg_score"],   "negative", "車両劣化が小さいほど上位"),
+        ("stStd_score",    spearman["stStd_score"],     "negative", "STばらつきが小さいほど上位"),
     ]
     for label, corr, exp_sign, note in factor_rows:
         interp = interpret_corr(corr, exp_sign)
@@ -588,14 +668,17 @@ def print_results(
     print(f"  Holdout RMSE: {holdout_rmse:.3f}（参考値）")
     print()
 
-    w1, w3, w4, w6, w5, w7 = weights
+    w1, w3, w4, w6, w5, w7, w8, w9, w10 = weights
     print("[RONDE形式の推奨weights]")
-    print(f"  w1 (hIndex):    {w1:.2f}  ← 変更前: 1.0")
-    print(f"  w3 (ST):        {w3:.2f}  ← 変更前: 1.0")
-    print(f"  w4 (recPoint):  {w4:.2f}  ← 変更前: 1.0")
-    print(f"  w5 (trialDev):  {w5:.2f}  ← 変更前: 1.0")
-    print(f"  w6 (homeFlag):  {w6:.2f}  ← 変更前: 1.0")
-    print(f"  w7 (rainFlag):  {w7:.2f}  ← 変更前: 1.0  （雨天{wet_race_count}件）")
+    print(f"  w1  (hIndex):         {w1:.2f}")
+    print(f"  w3  (ST):             {w3:.2f}")
+    print(f"  w4  (recPoint):       {w4:.2f}")
+    print(f"  w5  (trialDev):       {w5:.2f}")
+    print(f"  w6  (homeFlag):       {w6:.2f}")
+    print(f"  w7  (rainFlag):       {w7:.2f}  （雨天{wet_race_count}件）")
+    print(f"  w8  (changeVehicle):  {w8:.2f}")
+    print(f"  w9  (dayProg):        {w9:.2f}")
+    print(f"  w10 (stStd):          {w10:.2f}")
     print(f"  w2: 廃止（w5に一本化）")
     print()
 
@@ -619,35 +702,44 @@ def print_results(
 def save_json(
     obs_count, race_count, spearman, beta, weights, holdout_rmse, out_path
 ):
-    w1, w3, w4, w6, w5, w7 = weights
+    w1, w3, w4, w6, w5, w7, w8, w9, w10 = weights
     data = {
         "estimated_at": str(date.today()),
         "sample_count": obs_count,
         "race_count": race_count,
         "spearman": {
-            "hIndex":   round(spearman["hIndex_score"], 4),
-            "ST":       round(spearman["ST_score"], 4),
-            "recPoint": round(spearman["recPoint_score"], 4),
-            "homeFlag": round(spearman["homeFlag"], 4),
-            "trialDev": round(spearman["trialDev_score"], 4),
-            "rainFlag": round(spearman["rainFlag"], 4),
+            "hIndex":        round(spearman["hIndex_score"], 4),
+            "ST":            round(spearman["ST_score"], 4),
+            "recPoint":      round(spearman["recPoint_score"], 4),
+            "homeFlag":      round(spearman["homeFlag"], 4),
+            "trialDev":      round(spearman["trialDev_score"], 4),
+            "rainFlag":      round(spearman["rainFlag"], 4),
+            "changeVehicle": round(spearman["changeVehicle"], 4),
+            "dayProg":       round(spearman["dayProg_score"], 4),
+            "stStd":         round(spearman["stStd_score"], 4),
         },
         "regression_coef": {
-            "hIndex":   round(beta[0], 4),
-            "ST":       round(beta[1], 4),
-            "recPoint": round(beta[2], 4),
-            "homeFlag": round(beta[3], 4),
-            "trialDev": round(beta[4], 4),
-            "rainFlag": round(beta[5], 4),
+            "hIndex":        round(beta[0], 4),
+            "ST":            round(beta[1], 4),
+            "recPoint":      round(beta[2], 4),
+            "homeFlag":      round(beta[3], 4),
+            "trialDev":      round(beta[4], 4),
+            "rainFlag":      round(beta[5], 4),
+            "changeVehicle": round(beta[6], 4),
+            "dayProg":       round(beta[7], 4),
+            "stStd":         round(beta[8], 4),
         },
         "holdout_rmse": round(holdout_rmse, 4) if not math.isnan(holdout_rmse) else None,
         "recommended_weights": {
-            "w1": round(w1, 2),
-            "w3": round(w3, 2),
-            "w4": round(w4, 2),
-            "w5": round(w5, 2),
-            "w6": round(w6, 2),
-            "w7": round(w7, 2),
+            "w1":  round(w1,  2),
+            "w3":  round(w3,  2),
+            "w4":  round(w4,  2),
+            "w5":  round(w5,  2),
+            "w6":  round(w6,  2),
+            "w7":  round(w7,  2),
+            "w8":  round(w8,  2),
+            "w9":  round(w9,  2),
+            "w10": round(w10, 2),
         },
     }
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -675,21 +767,25 @@ def main():
 
     print(f"  読み込んだレース行数（生）: {len(races)}")
 
-    # 2. 選手統計構築（試走T平均・雨天成績）
+    # 2. 選手統計構築（試走T平均・雨天成績・ST標準偏差）
     player_avg_trial, player_wet_orders, player_dry_orders = build_player_stats(races)
     player_rain_flags = compute_player_rain_flags(player_wet_orders, player_dry_orders)
+    day1_trial_map  = build_day1_trial_map(races)
+    player_st_stds  = compute_player_st_stds(races)
     rain_strong_count = sum(player_rain_flags.values())
     # sunnyOrder/rainyOrder の有無を確認
     sunny_available = sum(
         1 for race in races for r in race.get("results", [])
         if r.get("sunnyOrder", 0) > 0 or r.get("rainyOrder", 0) > 0
     )
-    print(f"  選手数: 試走T平均算出={len(player_avg_trial)}名, 雨強フラグ={rain_strong_count}名")
+    print(f"  選手数: 試走T平均={len(player_avg_trial)}名, 雨強={rain_strong_count}名, ST-std={len(player_st_stds)}名")
     print(f"  sunnyOrder/rainyOrder付きエントリ: {sunny_available}件")
+    print(f"  day1試走マップ: {len(day1_trial_map)}エントリ")
 
     # 3. 前処理・フラット化
     observations, race_groups, excluded_count, wet_race_count, total_raw = build_observations(
-        races, player_avg_trial, player_rain_flags
+        races, player_avg_trial, player_rain_flags,
+        day1_trial_map=day1_trial_map, player_st_stds=player_st_stds
     )
 
     obs_count = len(observations)

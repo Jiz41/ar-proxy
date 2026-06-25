@@ -8,23 +8,32 @@
     "recPoint": -0.3526,
     "homeFlag": -0.1289,
     "trialDev": -0.0786,
-    "rainFlag": -0.0692
+    "rainFlag": -0.0692,
+    "changeVehicle": 0.0,
+    "dayProg": -0.1168,
+    "stStd": 0.0139
   },
   "regression_coef": {
-    "hIndex": 5.3375,
-    "ST": 0.3781,
-    "recPoint": 2.2017,
-    "homeFlag": -0.0949,
-    "trialDev": 0.9102,
-    "rainFlag": -0.1029
+    "hIndex": 5.0596,
+    "ST": 0.1724,
+    "recPoint": 1.8926,
+    "homeFlag": -0.1968,
+    "trialDev": 0.6375,
+    "rainFlag": -0.1232,
+    "changeVehicle": 0.0,
+    "dayProg": 0.7083,
+    "stStd": 0.4984
   },
-  "holdout_rmse": 2.0974,
+  "holdout_rmse": 2.0686,
   "recommended_weights": {
     "w1": 1.0,
-    "w3": 0.07,
-    "w4": 0.41,
-    "w5": 0.17,
-    "w6": 0.02,
-    "w7": 0.02
+    "w3": 0.03,
+    "w4": 0.37,
+    "w5": 0.13,
+    "w6": 0.04,
+    "w7": 0.02,
+    "w8": 0.0,
+    "w9": 0.14,
+    "w10": 0.1
   }
 }
