@@ -220,19 +220,75 @@ def load_races(pattern="output/*.jsonl"):
     return races
 
 
-def build_observations(races):
+def build_player_stats(races):
+    """
+    全レースから選手ごとの試走T平均・雨天/良走路着順リストを構築する。
+    戻り値:
+        player_avg_trial: {playerId: float}   2レース以上の選手のみ
+        player_wet_orders: {playerId: [order, ...]}
+        player_dry_orders: {playerId: [order, ...]}
+    """
+    player_trials = {}
+    player_wet_orders = {}
+    player_dry_orders = {}
+
+    for race in races:
+        tc = race.get("trackCondition", "")
+        is_wet = "湿" in tc
+        for r in race.get("results", []):
+            pid = r.get("playerId", "")
+            order = r.get("order", 0)
+            trial = r.get("trialRecord", 0)
+            if not pid or order == 0 or trial == 0:
+                continue
+            player_trials.setdefault(pid, []).append(trial)
+            if is_wet:
+                player_wet_orders.setdefault(pid, []).append(order)
+            else:
+                player_dry_orders.setdefault(pid, []).append(order)
+
+    player_avg_trial = {
+        pid: sum(v) / len(v)
+        for pid, v in player_trials.items()
+        if len(v) >= 2
+    }
+    return player_avg_trial, player_wet_orders, player_dry_orders
+
+
+def compute_player_rain_flags(player_wet_orders, player_dry_orders):
+    """
+    雨天3レース以上 かつ (良走路平均着順 − 湿走路平均着順) >= 0.5 → rainFlag=1
+    """
+    flags = {}
+    for pid in set(player_wet_orders) | set(player_dry_orders):
+        wet = player_wet_orders.get(pid, [])
+        dry = player_dry_orders.get(pid, [])
+        if len(wet) < 3:
+            flags[pid] = 0
+            continue
+        wet_avg = sum(wet) / len(wet)
+        dry_avg = sum(dry) / len(dry) if dry else 4.5
+        flags[pid] = 1 if (dry_avg - wet_avg) >= 0.5 else 0
+    return flags
+
+
+def build_observations(races, player_avg_trial=None, player_rain_flags=None):
     """
     レースリストから選手観測の flat リストとレース単位の情報を生成する。
 
     戻り値:
         observations: list of dict
             race_key, order, hIndex, startTiming, recommendationPoint,
-            homeFlag, is_wet (レースレベル)
+            homeFlag, trialDev, rainFlag, is_wet (レースレベル)
         race_groups: dict[race_key -> list[obs_idx]]
         excluded_count: int
         wet_race_count: int
         total_raw: int
     """
+    if player_avg_trial is None:
+        player_avg_trial = {}
+    if player_rain_flags is None:
+        player_rain_flags = {}
     observations = []
     race_groups = {}
     excluded_count = 0
@@ -266,14 +322,21 @@ def build_observations(races):
             if order == 0 or trial == 0:
                 excluded_count += 1
                 continue
+            pid = r.get("playerId", "")
             hIndex = r.get("handicap", 0) - trial * 1000
+            avg_trial = player_avg_trial.get(pid, 0)
+            trial_dev = (trial / avg_trial) if avg_trial > 0 else 1.0
+            rain_flag = float(player_rain_flags.get(pid, 0))
             valid.append({
                 "race_key": race_key,
+                "playerId": pid,
                 "order": order,
                 "hIndex": hIndex,
                 "startTiming": r.get("startTiming", 0.0),
                 "recommendationPoint": r.get("recommendationPoint", 0.0),
                 "homeFlag": float(r.get("homeFlag", 0)),
+                "trialDev": trial_dev,
+                "rainFlag": rain_flag,
                 "is_wet": is_wet,
             })
 
@@ -305,8 +368,8 @@ def normalize_within_races(observations, race_groups):
 
     各観測に norm_ プレフィックスでフィールドを追加（in-place）。
     """
-    FACTORS = ["hIndex", "startTiming", "recommendationPoint"]
-    INVERT = {"hIndex": True, "startTiming": True, "recommendationPoint": False}
+    FACTORS = ["hIndex", "startTiming", "recommendationPoint", "trialDev"]
+    INVERT = {"hIndex": True, "startTiming": True, "recommendationPoint": False, "trialDev": True}
 
     for idxs in race_groups.values():
         for factor in FACTORS:
@@ -324,9 +387,10 @@ def normalize_within_races(observations, race_groups):
                     norm = 1.0 - norm
                 observations[i][f"norm_{factor}"] = norm
 
-    # homeFlag はそのまま（正規化しない）
+    # homeFlag / rainFlag はバイナリなので正規化しない
     for obs in observations:
         obs["norm_homeFlag"] = obs["homeFlag"]
+        obs["norm_rainFlag"] = obs["rainFlag"]
 
 
 # ---------------------------------------------------------------------------
@@ -339,10 +403,12 @@ def compute_spearman(observations):
     戻り値: dict[factor_name -> corr]
     """
     factor_keys = [
-        ("hIndex_score", "norm_hIndex"),
-        ("ST_score", "norm_startTiming"),
+        ("hIndex_score",   "norm_hIndex"),
+        ("ST_score",       "norm_startTiming"),
         ("recPoint_score", "norm_recommendationPoint"),
-        ("homeFlag", "norm_homeFlag"),
+        ("homeFlag",       "norm_homeFlag"),
+        ("trialDev_score", "norm_trialDev"),
+        ("rainFlag",       "norm_rainFlag"),
     ]
     orders = [obs["order"] for obs in observations]
     results = {}
@@ -362,8 +428,10 @@ FEATURE_KEYS = [
     "norm_startTiming",
     "norm_recommendationPoint",
     "norm_homeFlag",
+    "norm_trialDev",
+    "norm_rainFlag",
 ]
-FEATURE_LABELS = ["hIndex", "ST", "recPoint", "homeFlag"]
+FEATURE_LABELS = ["hIndex", "ST", "recPoint", "homeFlag", "trialDev", "rainFlag"]
 
 
 def build_XY(observations):
@@ -414,18 +482,14 @@ def compute_holdout_rmse(observations, race_groups, holdout_ratio=0.2, seed=42):
 def beta_to_weights(beta):
     """
     回帰係数 β → RONDE 形式 weights（max=1.0 正規化）。
-
-    hIndex, ST の係数は正（高い正規化値が高い order = 悪い順位）を期待。
-    recPoint, homeFlag の係数は負（高い正規化値が低い order = 良い順位）を期待。
-
-    各因子の「RONDEスコアへの寄与度」として絶対値を採用し、
-    最大値を 1.0 に正規化する。
+    beta は [hIndex, ST, recPoint, homeFlag, trialDev, rainFlag] の順。
+    各因子の寄与度（絶対値）を最大値で正規化する。
+    戻り値: [w1, w3, w4, w6, w5, w7] の順
     """
-    # 各係数の絶対値 = 「どれだけ順位に影響するか」
     abs_beta = [abs(b) for b in beta]
     max_b = max(abs_beta) if max(abs_beta) > 1e-12 else 1.0
     normalized = [b / max_b for b in abs_beta]
-    return normalized  # [w1_idx, w3_idx, w4_idx, w6_idx]
+    return normalized  # indices: 0=w1, 1=w3, 2=w4, 3=w6, 4=w5, 5=w7
 
 
 # ---------------------------------------------------------------------------
@@ -492,6 +556,8 @@ def print_results(
         ("ST_score",       spearman["ST_score"],        "negative", "STが低いほど上位"),
         ("recPoint_score", spearman["recPoint_score"],  "negative", "審査Pが高いほど上位"),
         ("homeFlag",       spearman["homeFlag"],        "negative", "地元有利"),
+        ("trialDev_score", spearman["trialDev_score"],  "negative", "試走乖離が低いほど上位"),
+        ("rainFlag",       spearman["rainFlag"],        "negative", "雨強選手が上位"),
     ]
     for label, corr, exp_sign, note in factor_rows:
         interp = interpret_corr(corr, exp_sign)
@@ -504,14 +570,15 @@ def print_results(
     print(f"  Holdout RMSE: {holdout_rmse:.3f}（参考値）")
     print()
 
-    w1, w3, w4, w6 = weights
+    w1, w3, w4, w6, w5, w7 = weights
     print("[RONDE形式の推奨weights]")
     print(f"  w1 (hIndex):    {w1:.2f}  ← 変更前: 1.0")
     print(f"  w3 (ST):        {w3:.2f}  ← 変更前: 1.0")
     print(f"  w4 (recPoint):  {w4:.2f}  ← 変更前: 1.0")
+    print(f"  w5 (trialDev):  {w5:.2f}  ← 変更前: 1.0")
     print(f"  w6 (homeFlag):  {w6:.2f}  ← 変更前: 1.0")
-    print(f"  w2, w5: データ不足のため 1.0 維持推奨")
-    print(f"  w7: 雨天サンプル{wet_race_count}件。別途確認が必要。")
+    print(f"  w7 (rainFlag):  {w7:.2f}  ← 変更前: 1.0  （雨天{wet_race_count}件）")
+    print(f"  w2: raceresultにdeviation情報なし・1.0維持")
     print()
 
     print("[雨天レース傾向]")
@@ -534,22 +601,26 @@ def print_results(
 def save_json(
     obs_count, race_count, spearman, beta, weights, holdout_rmse, out_path
 ):
-    w1, w3, w4, w6 = weights
+    w1, w3, w4, w6, w5, w7 = weights
     data = {
         "estimated_at": str(date.today()),
         "sample_count": obs_count,
         "race_count": race_count,
         "spearman": {
-            "hIndex": round(spearman["hIndex_score"], 4),
-            "ST": round(spearman["ST_score"], 4),
+            "hIndex":   round(spearman["hIndex_score"], 4),
+            "ST":       round(spearman["ST_score"], 4),
             "recPoint": round(spearman["recPoint_score"], 4),
             "homeFlag": round(spearman["homeFlag"], 4),
+            "trialDev": round(spearman["trialDev_score"], 4),
+            "rainFlag": round(spearman["rainFlag"], 4),
         },
         "regression_coef": {
-            "hIndex": round(beta[0], 4),
-            "ST": round(beta[1], 4),
+            "hIndex":   round(beta[0], 4),
+            "ST":       round(beta[1], 4),
             "recPoint": round(beta[2], 4),
             "homeFlag": round(beta[3], 4),
+            "trialDev": round(beta[4], 4),
+            "rainFlag": round(beta[5], 4),
         },
         "holdout_rmse": round(holdout_rmse, 4) if not math.isnan(holdout_rmse) else None,
         "recommended_weights": {
@@ -557,9 +628,9 @@ def save_json(
             "w2": 1.0,
             "w3": round(w3, 2),
             "w4": round(w4, 2),
-            "w5": 1.0,
+            "w5": round(w5, 2),
             "w6": round(w6, 2),
-            "w7": 1.0,
+            "w7": round(w7, 2),
         },
     }
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -587,8 +658,16 @@ def main():
 
     print(f"  読み込んだレース行数（生）: {len(races)}")
 
-    # 2. 前処理・フラット化
-    observations, race_groups, excluded_count, wet_race_count, total_raw = build_observations(races)
+    # 2. 選手統計構築（試走T平均・雨天成績）
+    player_avg_trial, player_wet_orders, player_dry_orders = build_player_stats(races)
+    player_rain_flags = compute_player_rain_flags(player_wet_orders, player_dry_orders)
+    rain_strong_count = sum(player_rain_flags.values())
+    print(f"  選手数: 試走T平均算出={len(player_avg_trial)}名, 雨強フラグ={rain_strong_count}名")
+
+    # 3. 前処理・フラット化
+    observations, race_groups, excluded_count, wet_race_count, total_raw = build_observations(
+        races, player_avg_trial, player_rain_flags
+    )
 
     obs_count = len(observations)
     race_count = len(race_groups)
@@ -599,32 +678,32 @@ def main():
 
     print(f"  有効観測数: {obs_count}件 / {race_count}レース")
 
-    # 3. レース内正規化
+    # 4. レース内正規化
     normalize_within_races(observations, race_groups)
 
-    # 4. Spearman 相関
+    # 5. Spearman 相関
     spearman = compute_spearman(observations)
 
-    # 5. OLS 回帰
+    # 6. OLS 回帰
     beta = compute_ols(observations)
 
-    # 6. Holdout RMSE
+    # 7. Holdout RMSE
     holdout_rmse = compute_holdout_rmse(observations, race_groups)
 
-    # 7. 重み変換
+    # 8. 重み変換
     weights = beta_to_weights(beta)
 
-    # 8. 雨天分析
+    # 9. 雨天分析
     dry_mean, wet_mean, wet_winner_count = analyze_wet(observations)
 
-    # 9. 表示
+    # 10. 表示
     print_results(
         obs_count, race_count, excluded_count, wet_race_count,
         spearman, beta, weights, holdout_rmse,
         dry_mean, wet_mean, wet_winner_count,
     )
 
-    # 10. JSON 保存
+    # 11. JSON 保存
     save_json(obs_count, race_count, spearman, beta, weights, holdout_rmse, out_path)
 
 

@@ -174,7 +174,8 @@ async function scrapeRaceCard(venue, kaisaiId, day, raceNo) {
                     good: { w1: good_stats[0], w2: good_stats[1], w3: good_stats[2], out: good_stats[3] },
                     wet: { w1: wet_stats[0], w2: wet_stats[1], w3: wet_stats[2], out: wet_stats[3] },
                 },
-                ...recentRaceData
+                ...recentRaceData,
+            avgTrial: recentRaceData.avgTrial ?? avgTrialTime ?? null,
             });
         }
 
