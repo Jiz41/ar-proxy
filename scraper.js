@@ -163,9 +163,13 @@ async function scrapeRaceCard(venue, kaisaiId, day, raceNo) {
             const wet_stats = $(subCells[2]).text().trim().split('-').map(s => parseIntSafe(s));
 
             const recentRaceData = recentRacesByCarNum[carNum] || {};
-            
+
+            // 欠車判定: 試走タイムなし or 名前に「欠」を含む
+            const isScratched = (trialTime === null || trialTime === 0) || nameStr.includes('欠');
+
             riders.push({
                 carNum, name, period, age, base, handicap, st, trialTime, deviation,
+                isScratched,
                 auditPoint, auditRankCurrent, auditRankPrev,
                 win1_10, win2_10, win3_10, out_10, avgTrialTime,
                 rate90_2, rate90_3, rateGood_2, rateGood_3, rateWet_2, rateWet_3,
