@@ -1,0 +1,27 @@
+{
+  "estimated_at": "2026-06-25",
+  "sample_count": 3120,
+  "race_count": 428,
+  "spearman": {
+    "hIndex": 0.4835,
+    "ST": -0.0545,
+    "recPoint": -0.3526,
+    "homeFlag": -0.1289
+  },
+  "regression_coef": {
+    "hIndex": 5.5074,
+    "ST": 0.5662,
+    "recPoint": 2.3996,
+    "homeFlag": 0.0582
+  },
+  "holdout_rmse": 2.1225,
+  "recommended_weights": {
+    "w1": 1.0,
+    "w2": 1.0,
+    "w3": 0.1,
+    "w4": 0.44,
+    "w5": 1.0,
+    "w6": 0.01,
+    "w7": 1.0
+  }
+}
