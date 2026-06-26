@@ -165,7 +165,7 @@ async function scrapeRaceCard(venue, kaisaiId, day, raceNo) {
             const recentRaceData = recentRacesByCarNum[carNum] || {};
 
             // 欠車判定: 試走タイムなし or 名前に「欠」を含む
-            const isScratched = (trialTime === null || trialTime === 0) || nameStr.includes('欠');
+            const isScratched = nameStr.includes('欠');
 
             riders.push({
                 carNum, name, period, age, base, handicap, st, trialTime, deviation,
