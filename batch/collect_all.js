@@ -23,9 +23,22 @@ const VENUES = [
   { slug: 'sanyo',     venueId: '06' },
 ];
 
+// --- コマンドライン引数パース ---
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const opts = { from: null, to: null, target: null };
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--from'   && args[i+1]) opts.from   = args[++i];
+    if (args[i] === '--to'     && args[i+1]) opts.to     = args[++i];
+    if (args[i] === '--target' && args[i+1]) opts.target = parseInt(args[++i], 10);
+  }
+  if (!opts.to)     opts.to     = yesterdayJST();
+  if (!opts.from)   opts.from   = subtractDay(opts.to, 30);
+  if (!opts.target || isNaN(opts.target)) opts.target = 88;
+  return opts;
+}
+
 const MAX_RACE_NO       = 12;
-const MAX_DAYS_PER_VENUE = 30;
-const TARGET_COUNT      = 88;
 
 // --- ユーティリティ ---
 
@@ -94,12 +107,11 @@ function appendRecord(filePath, record) {
  * @param {number} totalVenues
  * @returns {number} 収集したレース数
  */
-async function collectVenue(slug, venueId, outputDir, venueIndex, totalVenues) {
+async function collectVenue(slug, venueId, outputDir, venueIndex, totalVenues, fromDate, toDate, targetCount) {
   console.log(`\n[${venueIndex + 1}/${totalVenues}] ${slug} 処理開始`);
 
   let collected  = 0;
-  let triedDays  = 0;
-  let currentDate = yesterdayJST();
+  let currentDate = toDate;
 
   // kaisaiId 重複処理防止キャッシュ
   const processedKaisaiIds = new Set();
@@ -117,7 +129,7 @@ async function collectVenue(slug, venueId, outputDir, venueIndex, totalVenues) {
     fs.unlinkSync(tmpFile);
   }
 
-  while (collected < TARGET_COUNT && triedDays < MAX_DAYS_PER_VENUE) {
+  while (collected < targetCount && currentDate >= fromDate) {
     const kaisaiId = currentDate + venueId;
 
     if (!processedKaisaiIds.has(kaisaiId)) {
@@ -176,7 +188,7 @@ async function collectVenue(slug, venueId, outputDir, venueIndex, totalVenues) {
               .map(r => r.carNum)
               .join('→');
 
-            const remaining = TARGET_COUNT - collected - 1; // -1 は今から書く分
+            const remaining = targetCount - collected - 1; // -1 は今から書く分
             console.log(
               `    day=${day} R${raceNo} ✓ (order: ${orderSummary}...) 残り: ${remaining}件`
             );
@@ -200,13 +212,13 @@ async function collectVenue(slug, venueId, outputDir, venueIndex, totalVenues) {
             if (minDate === null || currentDate < minDate) minDate = currentDate;
             if (maxDate === null || currentDate > maxDate) maxDate = currentDate;
 
-            if (collected >= TARGET_COUNT) break;
+            if (collected >= targetCount) break;
           } // raceNo loop
 
           // day に1件もなければ以降のdayも存在しないとみなす
           if (!dayHadAnyRace && day > 1) break;
 
-          if (collected >= TARGET_COUNT) break;
+          if (collected >= targetCount) break;
         } // day loop
 
       } else {
@@ -216,12 +228,11 @@ async function collectVenue(slug, venueId, outputDir, venueIndex, totalVenues) {
 
     // 1日前へ
     currentDate = subtractDay(currentDate, 1);
-    triedDays++;
   }
 
-  if (triedDays >= MAX_DAYS_PER_VENUE && collected < TARGET_COUNT) {
+  if (currentDate < fromDate && collected < targetCount) {
     console.warn(
-      `  [WARN] ${slug}: 最大遡及日数(${MAX_DAYS_PER_VENUE}日)に達しました。` +
+      `  [WARN] ${slug}: 指定範囲(${fromDate}〜${toDate})を全て探索しました。` +
       `収集数: ${collected}件`
     );
   }
@@ -247,12 +258,14 @@ async function collectVenue(slug, venueId, outputDir, venueIndex, totalVenues) {
 // --- エントリポイント ---
 
 async function main() {
+  const { from, to, target } = parseArgs();
+  console.log(`収集設定: from=${from} to=${to} target=${target}レース/会場`);
   const outputDir = ensureOutputDir();
   let grandTotal = 0;
 
   for (let i = 0; i < VENUES.length; i++) {
     const { slug, venueId } = VENUES[i];
-    const count = await collectVenue(slug, venueId, outputDir, i, VENUES.length);
+    const count = await collectVenue(slug, venueId, outputDir, i, VENUES.length, from, to, target);
     grandTotal += count;
   }
 
