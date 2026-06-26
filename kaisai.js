@@ -51,12 +51,11 @@ async function getKaisaiInfo(date) {
 
       if (!Object.values(VENUE_MAP).includes(venueSlug)) return;
 
-      // kaisaiId と day から実際の開催日を算出し、date と照合する
+      // kaisaiId と day から実際の開催日を算出する（フィルタはせず表示用に保持）
       const actualDate = kaisaiActualDate(kaisaiId, day);
-      if (actualDate !== date) return;
 
       if (!venues[venueSlug]) {
-        venues[venueSlug] = { venue: venueSlug, kaisaiId, day: parseInt(day, 10), races: [] };
+        venues[venueSlug] = { venue: venueSlug, kaisaiId, day: parseInt(day, 10), actualDate, races: [] };
       }
       const raceNum = parseInt(raceNo, 10);
       if (!venues[venueSlug].races.includes(raceNum)) {
