@@ -500,7 +500,7 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
 def normalize_within_races(observations, race_groups):
     """
     各因子をレース内で 0-1 に min-max 正規化する。
-    hIndex: 大きいほど不利（絶対値）→ INVERT=True で反転し大きいほど有利に
+    hIndex: 大きいほど有利（絶対値: -handicap - trial*1000）→ INVERT=False
     ST:     小さいほど有利 → 反転
     recPoint: 高いほど有利 → そのまま
     homeFlag: そのまま（0/1 なのでレース内正規化は無意味なので生値利用）
@@ -508,7 +508,7 @@ def normalize_within_races(observations, race_groups):
     各観測に norm_ プレフィックスでフィールドを追加（in-place）。
     """
     FACTORS = ["hIndex", "startTiming", "recommendationPoint", "trialDev", "dayProg", "stStd"]
-    INVERT = {"hIndex": True, "startTiming": True, "recommendationPoint": False,
+    INVERT = {"hIndex": False, "startTiming": True, "recommendationPoint": False,
               "trialDev": True, "dayProg": True, "stStd": True}
 
     for idxs in race_groups.values():
@@ -702,7 +702,7 @@ def print_results(
     print("-" * 50)
 
     factor_rows = [
-        ("hIndex_score",   spearman["hIndex_score"],   "negative", "ハンデ-試走が低いほど上位"),
+        ("hIndex_score",   spearman["hIndex_score"],   "negative", "ハンデ軽+試走速（hIndex大）ほど上位"),
         ("ST_score",       spearman["ST_score"],        "negative", "STが低いほど上位"),
         ("recPoint_score", spearman["recPoint_score"],  "negative", "審査Pが高いほど上位"),
         ("homeFlag",       spearman["homeFlag"],        "negative", "地元有利"),
