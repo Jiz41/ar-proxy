@@ -219,9 +219,13 @@ def load_races(pattern="output/*.jsonl"):
                     continue
                 try:
                     obj = json.loads(line)
-                    races.append(obj)
                 except json.JSONDecodeError:
                     continue
+                # racecard_*.jsonl 等の results を持たないオブジェクトは除外
+                # （race_key 衝突による重複スキップを防ぐ）
+                if "results" not in obj:
+                    continue
+                races.append(obj)
     return races
 
 
@@ -330,8 +334,40 @@ def rain_flag_from_orders(sunny_order, rainy_order):
     return 0
 
 
+def load_racecard_map(output_dir):
+    """
+    racecard_wet.jsonl + racecard_good.jsonl を読み込み、
+    (venue, kaisaiId, day, raceNo, carNum) -> {rate90_3, rateWet_3} のマップを返す
+    """
+    rc_map = {}
+    for fname in ["racecard_wet.jsonl", "racecard_good.jsonl"]:
+        fpath = os.path.join(output_dir, fname)
+        if not os.path.exists(fpath):
+            continue
+        with open(fpath, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    d = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if d.get("error"):
+                    continue
+                key_base = (d["venue"], d["kaisaiId"], d["day"], d["raceNo"])
+                for r in d.get("riders", []):
+                    key = key_base + (r.get("carNum"),)
+                    rc_map[key] = {
+                        "rate90_3":  r.get("rate90_3") or 0,
+                        "rateWet_3": r.get("rateWet_3") or 0,
+                    }
+    return rc_map
+
+
 def build_observations(races, player_avg_trial=None, player_rain_flags=None,
-                       day1_trial_map=None, player_st_stds=None):
+                       day1_trial_map=None, player_st_stds=None,
+                       racecard_map=None):
     """
     レースリストから選手観測の flat リストとレース単位の情報を生成する。
 
@@ -352,6 +388,8 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
         day1_trial_map = {}
     if player_st_stds is None:
         player_st_stds = {}
+    if racecard_map is None:
+        racecard_map = {}
     observations = []
     race_groups = {}
     excluded_count = 0
@@ -376,6 +414,15 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
             wet_race_count += 1
 
         results = race.get("results", [])
+
+        # レース内z正規化用の統計（ハンデ・試走タイム）
+        race_handicaps = [r.get("handicap", 0) for r in results if r.get("handicap")]
+        race_trials    = [r.get("trialRecord", 0) for r in results if r.get("trialRecord")]
+        h_mean = sum(race_handicaps) / len(race_handicaps) if race_handicaps else 0
+        h_std  = stdev(race_handicaps) if len(race_handicaps) >= 2 else 1
+        t_mean = sum(race_trials) / len(race_trials) if race_trials else 0
+        t_std  = stdev(race_trials) if len(race_trials) >= 2 else 1
+
         valid = []
         for r in results:
             total_raw += 1
@@ -386,7 +433,15 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
                 excluded_count += 1
                 continue
             pid = r.get("playerId", "")
-            hIndex = r.get("handicap", 0) - trial * 1000
+            # hIndex（絶対値方式・ar_ronde.js統一）: -handicap - trialRecord*1000
+            hIndex = -r.get("handicap", 0) - (trial * 1000)
+            # w4: 走路条件に応じて rate90_3 / rateWet_3 を選択（racecard由来）
+            rc_key = (race["venue"], race["kaisaiId"], race["day"],
+                      race["raceNo"], r.get("carNum"))
+            rc_data = racecard_map.get(rc_key, {})
+            winRate = rc_data.get("rateWet_3", 0) if is_wet else rc_data.get("rate90_3", 0)
+            if winRate == 0:
+                winRate = rc_data.get("rate90_3", 0)
             avg_trial = player_avg_trial.get(pid, 0)
             trial_dev = (trial / avg_trial) if avg_trial > 0 else 1.0
             # sunnyOrder/rainyOrder が存在すればそちらを優先、なければ統計フォールバック
@@ -414,7 +469,7 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
                 "order": order,
                 "hIndex": hIndex,
                 "startTiming": r.get("startTiming", 0.0),
-                "recommendationPoint": r.get("recommendationPoint", 0.0),
+                "recommendationPoint": winRate,
                 "homeFlag": float(r.get("homeFlag", 0)),
                 "trialDev": trial_dev,
                 "rainFlag": rain_flag,
@@ -445,7 +500,7 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
 def normalize_within_races(observations, race_groups):
     """
     各因子をレース内で 0-1 に min-max 正規化する。
-    hIndex: 小さいほど有利 → 正規化後に反転（1 - norm）
+    hIndex: 大きいほど不利（絶対値）→ INVERT=True で反転し大きいほど有利に
     ST:     小さいほど有利 → 反転
     recPoint: 高いほど有利 → そのまま
     homeFlag: そのまま（0/1 なのでレース内正規化は無意味なので生値利用）
@@ -772,6 +827,8 @@ def main():
     player_rain_flags = compute_player_rain_flags(player_wet_orders, player_dry_orders)
     day1_trial_map  = build_day1_trial_map(races)
     player_st_stds  = compute_player_st_stds(races)
+    racecard_map    = load_racecard_map(os.path.join(repo_root, "output"))
+    print(f"  racecardマップ: {len(racecard_map)}エントリ")
     rain_strong_count = sum(player_rain_flags.values())
     # sunnyOrder/rainyOrder の有無を確認
     sunny_available = sum(
@@ -785,7 +842,8 @@ def main():
     # 3. 前処理・フラット化
     observations, race_groups, excluded_count, wet_race_count, total_raw = build_observations(
         races, player_avg_trial, player_rain_flags,
-        day1_trial_map=day1_trial_map, player_st_stds=player_st_stds
+        day1_trial_map=day1_trial_map, player_st_stds=player_st_stds,
+        racecard_map=racecard_map
     )
 
     obs_count = len(observations)
