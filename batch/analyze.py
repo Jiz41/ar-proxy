@@ -502,7 +502,7 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
 def normalize_within_races(observations, race_groups):
     """
     各因子をレース内で 0-1 に min-max 正規化する。
-    handicap:    小さいほど有利（前方スタート）→ INVERT=True
+    handicap:    重いほど有利（実力の代理）→ INVERT=False
     trialRecord: 小さいほど有利（速い）→ INVERT=True
     ST:     小さいほど有利 → 反転
     recPoint: 高いほど有利 → そのまま
@@ -511,8 +511,8 @@ def normalize_within_races(observations, race_groups):
     各観測に norm_ プレフィックスでフィールドを追加（in-place）。
     """
     FACTORS = ["handicap", "trialRecord", "startTiming", "recommendationPoint", "trialDev", "dayProg", "stStd"]
-    INVERT = {"handicap": True, "trialRecord": True, "startTiming": True,
-              "recommendationPoint": False, "trialDev": True, "dayProg": True, "stStd": True}
+    INVERT = {"handicap": False, "trialRecord": True, "startTiming": True,
+              "recommendationPoint": False, "trialDev": True, "dayProg": True, "stStd": True}  # handicapは重いほど有利（実力の代理）
 
     for idxs in race_groups.values():
         for factor in FACTORS:
