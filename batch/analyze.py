@@ -373,7 +373,7 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
 
     戻り値:
         observations: list of dict
-            race_key, order, hIndex, startTiming, recommendationPoint,
+            race_key, order, handicap, trialRecord, startTiming, recommendationPoint,
             homeFlag, trialDev, rainFlag, is_wet (レースレベル)
         race_groups: dict[race_key -> list[obs_idx]]
         excluded_count: int
@@ -433,8 +433,9 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
                 excluded_count += 1
                 continue
             pid = r.get("playerId", "")
-            # hIndex（絶対値方式・ar_ronde.js統一）: -handicap - trialRecord*1000
-            hIndex = -r.get("handicap", 0) - (trial * 1000)
+            # hIndex廃止: handicap・trialRecord を独立因子化（案C Step1）
+            handicap_val = float(r.get("handicap", 0))
+            trialRecord_val = float(trial)
             # w4: 走路条件に応じて rate90_3 / rateWet_3 を選択（racecard由来）
             rc_key = (race["venue"], race["kaisaiId"], race["day"],
                       race["raceNo"], r.get("carNum"))
@@ -467,7 +468,8 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
                 "race_key": race_key,
                 "playerId": pid,
                 "order": order,
-                "hIndex": hIndex,
+                "handicap": handicap_val,
+                "trialRecord": trialRecord_val,
                 "startTiming": r.get("startTiming", 0.0),
                 "recommendationPoint": winRate,
                 "homeFlag": float(r.get("homeFlag", 0)),
@@ -500,16 +502,17 @@ def build_observations(races, player_avg_trial=None, player_rain_flags=None,
 def normalize_within_races(observations, race_groups):
     """
     各因子をレース内で 0-1 に min-max 正規化する。
-    hIndex: 大きいほど有利（絶対値: -handicap - trial*1000）→ INVERT=False
+    handicap:    小さいほど有利（前方スタート）→ INVERT=True
+    trialRecord: 小さいほど有利（速い）→ INVERT=True
     ST:     小さいほど有利 → 反転
     recPoint: 高いほど有利 → そのまま
     homeFlag: そのまま（0/1 なのでレース内正規化は無意味なので生値利用）
 
     各観測に norm_ プレフィックスでフィールドを追加（in-place）。
     """
-    FACTORS = ["hIndex", "startTiming", "recommendationPoint", "trialDev", "dayProg", "stStd"]
-    INVERT = {"hIndex": False, "startTiming": True, "recommendationPoint": False,
-              "trialDev": True, "dayProg": True, "stStd": True}
+    FACTORS = ["handicap", "trialRecord", "startTiming", "recommendationPoint", "trialDev", "dayProg", "stStd"]
+    INVERT = {"handicap": True, "trialRecord": True, "startTiming": True,
+              "recommendationPoint": False, "trialDev": True, "dayProg": True, "stStd": True}
 
     for idxs in race_groups.values():
         for factor in FACTORS:
@@ -544,7 +547,8 @@ def compute_spearman(observations):
     戻り値: dict[factor_name -> corr]
     """
     factor_keys = [
-        ("hIndex_score",     "norm_hIndex"),
+        ("handicap_score",    "norm_handicap"),
+        ("trialRecord_score", "norm_trialRecord"),
         ("ST_score",         "norm_startTiming"),
         ("recPoint_score",   "norm_recommendationPoint"),
         ("homeFlag",         "norm_homeFlag"),
@@ -568,7 +572,8 @@ def compute_spearman(observations):
 # ---------------------------------------------------------------------------
 
 FEATURE_KEYS = [
-    "norm_hIndex",
+    "norm_handicap",
+    "norm_trialRecord",
     "norm_startTiming",
     "norm_recommendationPoint",
     "norm_homeFlag",
@@ -579,8 +584,8 @@ FEATURE_KEYS = [
     "norm_stStd",
 ]
 FEATURE_LABELS = [
-    "hIndex", "ST", "recPoint", "homeFlag", "trialDev",
-    "rainFlag", "changeVehicle", "dayProg", "stStd",
+    "handicap", "trialRecord", "ST", "recPoint", "homeFlag",
+    "trialDev", "rainFlag", "changeVehicle", "dayProg", "stStd",
 ]
 
 
@@ -632,16 +637,16 @@ def compute_holdout_rmse(observations, race_groups, holdout_ratio=0.2, seed=42):
 def beta_to_weights(beta):
     """
     回帰係数 β → RONDE 形式 weights（max=1.0 正規化）。
-    beta は [intercept, hIndex, ST, recPoint, homeFlag, trialDev, rainFlag,
-             changeVehicle, dayProg, stStd] の順（先頭は切片）。
+    beta は [intercept, handicap, trialRecord, ST, recPoint, homeFlag,
+             trialDev, rainFlag, changeVehicle, dayProg, stStd] の順（先頭は切片）。
     切片 beta[0] は重みに含めない。
-    戻り値: [w1, w3, w4, w6, w5, w7, w8, w9, w10] の順
+    戻り値: [w11, w12, w3, w4, w6, w5, w7, w8, w9, w10] の順
     """
     factor_beta = beta[1:]
     abs_beta = [abs(b) for b in factor_beta]
     max_b = max(abs_beta) if max(abs_beta) > 1e-12 else 1.0
     normalized = [b / max_b for b in abs_beta]
-    return normalized  # 0=w1,1=w3,2=w4,3=w6,4=w5,5=w7,6=w8,7=w9,8=w10
+    return normalized  # 0=w11,1=w12,2=w3,3=w4,4=w6,5=w5,6=w7,7=w8,8=w9,9=w10
 
 
 # ---------------------------------------------------------------------------
@@ -650,7 +655,7 @@ def beta_to_weights(beta):
 
 def analyze_wet(observations):
     """
-    良走路 vs 湿走路での 1着選手の hIndex 平均を比較する。
+    良走路 vs 湿走路での 1着選手の handicap 平均を比較する。
     戻り値: (dry_mean, wet_mean, wet_count)
     """
     dry_hindex = []
@@ -658,9 +663,9 @@ def analyze_wet(observations):
     for obs in observations:
         if obs["order"] == 1:
             if obs["is_wet"] == 0:
-                dry_hindex.append(obs["hIndex"])
+                dry_hindex.append(obs["handicap"])
             else:
-                wet_hindex.append(obs["hIndex"])
+                wet_hindex.append(obs["handicap"])
     return mean(dry_hindex), mean(wet_hindex), len(wet_hindex)
 
 
@@ -704,7 +709,8 @@ def print_results(
     print("-" * 50)
 
     factor_rows = [
-        ("hIndex_score",   spearman["hIndex_score"],   "negative", "ハンデ軽+試走速（hIndex大）ほど上位"),
+        ("handicap_score",    spearman["handicap_score"],    "negative", "ハンデ小（前方）ほど上位"),
+        ("trialRecord_score", spearman["trialRecord_score"],  "negative", "試走T速いほど上位"),
         ("ST_score",       spearman["ST_score"],        "negative", "STが低いほど上位"),
         ("recPoint_score", spearman["recPoint_score"],  "negative", "審査Pが高いほど上位"),
         ("homeFlag",       spearman["homeFlag"],        "negative", "地元有利"),
@@ -726,9 +732,10 @@ def print_results(
     print(f"  Holdout RMSE: {holdout_rmse:.3f}（参考値）")
     print()
 
-    w1, w3, w4, w6, w5, w7, w8, w9, w10 = weights
+    w11, w12, w3, w4, w6, w5, w7, w8, w9, w10 = weights
     print("[RONDE形式の推奨weights]")
-    print(f"  w1  (hIndex):         {w1:.2f}")
+    print(f"  w11 (handicap):       {w11:.2f}")
+    print(f"  w12 (trialRecord):    {w12:.2f}")
     print(f"  w3  (ST):             {w3:.2f}")
     print(f"  w4  (recPoint):       {w4:.2f}")
     print(f"  w5  (trialDev):       {w5:.2f}")
@@ -760,13 +767,14 @@ def print_results(
 def save_json(
     obs_count, race_count, spearman, beta, weights, holdout_rmse, out_path
 ):
-    w1, w3, w4, w6, w5, w7, w8, w9, w10 = weights
+    w11, w12, w3, w4, w6, w5, w7, w8, w9, w10 = weights
     data = {
         "estimated_at": str(date.today()),
         "sample_count": obs_count,
         "race_count": race_count,
         "spearman": {
-            "hIndex":        round(spearman["hIndex_score"], 4),
+            "handicap":      round(spearman["handicap_score"], 4),
+            "trialRecord":   round(spearman["trialRecord_score"], 4),
             "ST":            round(spearman["ST_score"], 4),
             "recPoint":      round(spearman["recPoint_score"], 4),
             "homeFlag":      round(spearman["homeFlag"], 4),
@@ -778,19 +786,21 @@ def save_json(
         },
         "regression_coef": {
             "intercept":     round(beta[0], 4),
-            "hIndex":        round(beta[1], 4),
-            "ST":            round(beta[2], 4),
-            "recPoint":      round(beta[3], 4),
-            "homeFlag":      round(beta[4], 4),
-            "trialDev":      round(beta[5], 4),
-            "rainFlag":      round(beta[6], 4),
-            "changeVehicle": round(beta[7], 4),
-            "dayProg":       round(beta[8], 4),
-            "stStd":         round(beta[9], 4),
+            "handicap":      round(beta[1], 4),
+            "trialRecord":   round(beta[2], 4),
+            "ST":            round(beta[3], 4),
+            "recPoint":      round(beta[4], 4),
+            "homeFlag":      round(beta[5], 4),
+            "trialDev":      round(beta[6], 4),
+            "rainFlag":      round(beta[7], 4),
+            "changeVehicle": round(beta[8], 4),
+            "dayProg":       round(beta[9], 4),
+            "stStd":         round(beta[10], 4),
         },
         "holdout_rmse": round(holdout_rmse, 4) if not math.isnan(holdout_rmse) else None,
         "recommended_weights": {
-            "w1":  round(w1,  2),
+            "w11": round(w11, 2),
+            "w12": round(w12, 2),
             "w3":  round(w3,  2),
             "w4":  round(w4,  2),
             "w5":  round(w5,  2),
