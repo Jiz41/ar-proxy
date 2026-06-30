@@ -585,8 +585,8 @@ FEATURE_LABELS = [
 
 
 def build_XY(observations):
-    """観測リストから X (n x p), y (n,) を構築"""
-    X = [[obs[k] for k in FEATURE_KEYS] for obs in observations]
+    """観測リストから X (n x p), y (n,) を構築（先頭に切片列 1.0 を付与）"""
+    X = [[1.0] + [obs[k] for k in FEATURE_KEYS] for obs in observations]
     y = [obs["order"] for obs in observations]
     return X, y
 
@@ -632,11 +632,13 @@ def compute_holdout_rmse(observations, race_groups, holdout_ratio=0.2, seed=42):
 def beta_to_weights(beta):
     """
     回帰係数 β → RONDE 形式 weights（max=1.0 正規化）。
-    beta は [hIndex, ST, recPoint, homeFlag, trialDev, rainFlag,
-             changeVehicle, dayProg, stStd] の順。
+    beta は [intercept, hIndex, ST, recPoint, homeFlag, trialDev, rainFlag,
+             changeVehicle, dayProg, stStd] の順（先頭は切片）。
+    切片 beta[0] は重みに含めない。
     戻り値: [w1, w3, w4, w6, w5, w7, w8, w9, w10] の順
     """
-    abs_beta = [abs(b) for b in beta]
+    factor_beta = beta[1:]
+    abs_beta = [abs(b) for b in factor_beta]
     max_b = max(abs_beta) if max(abs_beta) > 1e-12 else 1.0
     normalized = [b / max_b for b in abs_beta]
     return normalized  # 0=w1,1=w3,2=w4,3=w6,4=w5,5=w7,6=w8,7=w9,8=w10
@@ -718,7 +720,8 @@ def print_results(
     print()
 
     print("[重回帰係数（OLS、レース内正規化済み）]")
-    for label, b in zip(FEATURE_LABELS, beta):
+    print(f"  {'intercept':<12}: {beta[0]:>+8.4f}")
+    for label, b in zip(FEATURE_LABELS, beta[1:]):
         print(f"  {label:<12}: {b:>+8.4f}")
     print(f"  Holdout RMSE: {holdout_rmse:.3f}（参考値）")
     print()
@@ -774,15 +777,16 @@ def save_json(
             "stStd":         round(spearman["stStd_score"], 4),
         },
         "regression_coef": {
-            "hIndex":        round(beta[0], 4),
-            "ST":            round(beta[1], 4),
-            "recPoint":      round(beta[2], 4),
-            "homeFlag":      round(beta[3], 4),
-            "trialDev":      round(beta[4], 4),
-            "rainFlag":      round(beta[5], 4),
-            "changeVehicle": round(beta[6], 4),
-            "dayProg":       round(beta[7], 4),
-            "stStd":         round(beta[8], 4),
+            "intercept":     round(beta[0], 4),
+            "hIndex":        round(beta[1], 4),
+            "ST":            round(beta[2], 4),
+            "recPoint":      round(beta[3], 4),
+            "homeFlag":      round(beta[4], 4),
+            "trialDev":      round(beta[5], 4),
+            "rainFlag":      round(beta[6], 4),
+            "changeVehicle": round(beta[7], 4),
+            "dayProg":       round(beta[8], 4),
+            "stStd":         round(beta[9], 4),
         },
         "holdout_rmse": round(holdout_rmse, 4) if not math.isnan(holdout_rmse) else None,
         "recommended_weights": {
