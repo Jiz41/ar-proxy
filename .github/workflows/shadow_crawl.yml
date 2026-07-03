@@ -1,0 +1,49 @@
+name: RONDE Shadow Crawl
+
+# ─────────────────────────────────────────────────────────────────
+# RONDE シャドー記録の自動巡回。
+# JST 9:00〜翌0:45 を1時間ごとにカバーする。
+#   cron '0 0-15 * * *' : UTC 毎時00分（0〜15時）= JST 9:00〜24:00 の毎時00分
+#   cron '45 15 * * *'  : UTC 15:45 = JST 0:45（最終便）
+# ─────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: '0 0-15 * * *'
+    - cron: '45 15 * * *'
+  workflow_dispatch:
+
+# 同時実行を防止（前回が走行中なら完了を待つ）
+concurrency:
+  group: ronde-shadow-crawl
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run shadow crawl
+        env:
+          SHADOW_ENDPOINT: ${{ secrets.SHADOW_ENDPOINT }}
+          SHADOW_TOKEN: ${{ secrets.SHADOW_TOKEN }}
+        run: node shadow/crawl.js
+
+      - name: Commit state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add shadow/state
+          if git diff --cached --quiet; then
+            echo "state に変更なし"
+          else
+            git commit -m "chore(shadow): update sent state [skip ci]"
+            git push
+          fi
