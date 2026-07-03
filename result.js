@@ -71,6 +71,75 @@ function findResultsQuery(queries) {
 }
 
 /**
+ * 全クエリを横断して、払戻オッズ配列（trifecta 等）を持つ odds クエリの data を返す
+ * @param {Array} queries
+ * @returns {object|null}
+ */
+function findOddsData(queries) {
+  for (const q of queries) {
+    const d = q && q.state && q.state.data;
+    if (d && Array.isArray(d.trifecta) && d.trifecta.length > 0) {
+      return d;
+    }
+  }
+  return null;
+}
+
+// 券種スラッグ → common クエリの的中買い目IDフィールド名
+const PAYOUT_TYPE_KEYS = {
+  win:           'winWinningOddsIds',
+  show:          'showWinningOddsIds',
+  trifecta:      'trifectaWinningOddsIds',
+  trio:          'trioWinningOddsIds',
+  exacta:        'exactaWinningOddsIds',
+  quinella:      'quinellaWinningOddsIds',
+  quinellaPlace: 'quinellaPlaceWinningOddsIds',
+};
+
+/**
+ * odds クエリの data から id→entry の Map 群を構築する
+ * @param {object|null} oddsData
+ * @returns {object} スラッグ → Map(id → entry)
+ */
+function buildOddsIndex(oddsData) {
+  const index = {};
+  for (const slug of Object.keys(PAYOUT_TYPE_KEYS)) {
+    const map = new Map();
+    const arr = oddsData && Array.isArray(oddsData[slug]) ? oddsData[slug] : [];
+    for (const e of arr) {
+      if (e && e.id != null) map.set(String(e.id), e);
+    }
+    index[slug] = map;
+  }
+  return index;
+}
+
+/**
+ * common クエリの的中買い目IDを payoffUnitPrice に解決する
+ * @param {object} data       - common クエリの data
+ * @param {object} oddsIndex  - buildOddsIndex の戻り値
+ * @returns {object} スラッグ → [{ combination:number[], payoff:number|null }]
+ */
+function resolvePayouts(data, oddsIndex) {
+  const payouts = {};
+  for (const slug of Object.keys(PAYOUT_TYPE_KEYS)) {
+    const idField = PAYOUT_TYPE_KEYS[slug];
+    const ids = Array.isArray(data[idField]) ? data[idField] : [];
+    payouts[slug] = ids.map(id => {
+      const entry = oddsIndex[slug].get(String(id));
+      if (entry) {
+        return {
+          combination: Array.isArray(entry.key) ? entry.key : null,
+          payoff: typeof entry.payoffUnitPrice === 'number' ? entry.payoffUnitPrice : null,
+        };
+      }
+      return { combination: null, payoff: null, id: String(id) };
+    });
+  }
+  return payouts;
+}
+
+/**
  * オートレース着順データを取得する
  * @param {string} venue     - slug (kawaguchi など)
  * @param {string} kaisaiId  - 開催ID (例: 2026060102)
@@ -114,6 +183,15 @@ async function getResultData(venue, kaisaiId, day, raceNo) {
   if (!data) {
     throw new Error('data.results を持つクエリが見つかりません');
   }
+
+  // 払戻（odds クエリ）を解決する ── 着順取得とは独立の追加処理
+  const oddsData   = findOddsData(queries);
+  const oddsIndex  = buildOddsIndex(oddsData);
+  const payouts    = resolvePayouts(data, oddsIndex);
+  const payout_3rentan = payouts.trifecta.length && payouts.trifecta[0].payoff != null
+    ? payouts.trifecta[0].payoff : null;
+  const payout_2rentan = payouts.exacta.length && payouts.exacta[0].payoff != null
+    ? payouts.exacta[0].payoff : null;
 
   const { results, race, entries, players } = data;
 
@@ -177,6 +255,9 @@ async function getResultData(venue, kaisaiId, day, raceNo) {
     temperature:    race ? race.temperature    : null,
     humidity:       race ? race.humidity       : null,
     results:        formattedResults,
+    payout_3rentan,
+    payout_2rentan,
+    payouts,
   };
 }
 
