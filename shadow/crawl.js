@@ -183,7 +183,8 @@ async function main() {
       // 非欠車（isScratched=false）の選手全員の trialTime > 0 のレースのみ対象。
       // 1人でも試走タイム未取得ならスキップ。まだ試走が掲載されていないだけなので、
       // sent には記録せず、次回 cron 実行時に再判定される。
-      const active = json.riders.filter(r => !r.isScratched);
+      // carNum が null の選手は「欠」表記なしの実質欠場（データ源の表記ゆれ）として除外する。
+      const active = json.riders.filter(r => !r.isScratched && r.carNum != null);
       if (active.length === 0) {
         console.log(`[skip] ${raceKey}: 非欠車0名`);
         await sleep(RACE_SLEEP_MS);
@@ -206,7 +207,12 @@ async function main() {
       //   parseRaceData の算出値をそのまま踏襲する。
       let ctx;
       try {
-        const adapted = ArAdapter.parseRaceData(json);
+        // parseRaceData は isScratched しか見ないため、carNum=null の実質欠場選手が
+        // 計算・記録へ混入しないよう、渡す前に riders からも除外しておく。
+        const cleaned = Object.assign({}, json, {
+          riders: json.riders.filter(r => r.carNum != null),
+        });
+        const adapted = ArAdapter.parseRaceData(cleaned);
         let scored = ArRonde.calcRaceScores(adapted.players, adapted.roadCondition);
         scored = ArRonde.calcLPoint(scored);
         const volatility = ArRonde.calcVolatility(scored);
