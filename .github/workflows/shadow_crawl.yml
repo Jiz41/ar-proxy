@@ -13,6 +13,10 @@ on:
     - cron: '45 15 * * *'
   workflow_dispatch:
 
+# state コミットの push に必要
+permissions:
+  contents: write
+
 # 同時実行を防止（前回が走行中なら完了を待つ）
 concurrency:
   group: ronde-shadow-crawl
