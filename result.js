@@ -140,6 +140,17 @@ function resolvePayouts(data, oddsIndex) {
 }
 
 /**
+ * 開催ID先頭8桁（初日）と日目から期待日付 YYYYMMDD を算出する
+ */
+function deriveExpectedDate(kaisaiId, day) {
+  const s = String(kaisaiId).slice(0, 8);
+  const d = new Date(Date.UTC(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8)));
+  d.setUTCDate(d.getUTCDate() + (Number(day) - 1));
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth()+1)}${p(d.getUTCDate())}`;
+}
+
+/**
  * オートレース着順データを取得する
  * @param {string} venue     - slug (kawaguchi など)
  * @param {string} kaisaiId  - 開催ID (例: 2026060102)
@@ -147,45 +158,65 @@ function resolvePayouts(data, oddsIndex) {
  * @param {string|number} raceNo
  */
 async function getResultData(venue, kaisaiId, day, raceNo) {
-  const url = `https://www.winticket.jp/autorace/${venue}/raceresult/${kaisaiId}/${day}/${raceNo}`;
+  const url = `https://api.winticket.jp/v1/autorace/cups/${kaisaiId}/schedules/${day}/races/${raceNo}`;
 
-  const res = await fetch(url, fetchOptions);
+  const apiFetchOptions = {
+    ...fetchOptions,
+    headers: {
+      ...fetchOptions.headers,
+      'Accept': 'application/json',
+    },
+  };
+
+  const res = await fetch(url, apiFetchOptions);
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} fetching ${url}`);
   }
-  const html = await res.text();
+  const data = await res.json();
 
-  // __PRELOADED_STATE__ を切り出す
-  const marker = 'window.__PRELOADED_STATE__ =';
-  let jsonStr;
-  try {
-    jsonStr = extractJsonByBraceDepth(html, marker);
-  } catch (e) {
-    throw new Error(`__PRELOADED_STATE__ 抽出失敗: ${e.message}`);
+  // 日付検証（誤った日目指定で別日の結果が混入するのを防ぐ。fail-closed）
+  const expectedDate = deriveExpectedDate(kaisaiId, day);
+  if (!data.schedule || !data.schedule.date) {
+    throw new Error(`日付検証不能: scheduleが応答に無い (${kaisaiId}/${day}/R${raceNo})`);
+  }
+  if (data.schedule.date !== expectedDate) {
+    throw new Error(`日付不一致: 期待${expectedDate} 実際${data.schedule.date} (${kaisaiId}/${day}/R${raceNo})`);
   }
 
-  let state;
-  try {
-    state = JSON.parse(jsonStr);
-  } catch (e) {
-    throw new Error(`__PRELOADED_STATE__ JSON.parse失敗: ${e.message}`);
-  }
+  // ── 旧HTML抽出方式（API遮断時の懐刀。復活させる場合はこのブロックを解凍し下のAPI取得を無効化）──
+  // const html = await res.text();
+  //
+  // // __PRELOADED_STATE__ を切り出す
+  // const marker = 'window.__PRELOADED_STATE__ =';
+  // let jsonStr;
+  // try {
+  //   jsonStr = extractJsonByBraceDepth(html, marker);
+  // } catch (e) {
+  //   throw new Error(`__PRELOADED_STATE__ 抽出失敗: ${e.message}`);
+  // }
+  //
+  // let state;
+  // try {
+  //   state = JSON.parse(jsonStr);
+  // } catch (e) {
+  //   throw new Error(`__PRELOADED_STATE__ JSON.parse失敗: ${e.message}`);
+  // }
+  //
+  // // tanStackQuery クエリ群から results を持つものを特定
+  // const queries = state &&
+  //   state.tanStackQuery &&
+  //   state.tanStackQuery.queries;
+  // if (!Array.isArray(queries)) {
+  //   throw new Error('tanStackQuery.queries が見つかりません');
+  // }
+  //
+  // const data = findResultsQuery(queries);
+  // if (!data) {
+  //   throw new Error('data.results を持つクエリが見つかりません');
+  // }
 
-  // tanStackQuery クエリ群から results を持つものを特定
-  const queries = state &&
-    state.tanStackQuery &&
-    state.tanStackQuery.queries;
-  if (!Array.isArray(queries)) {
-    throw new Error('tanStackQuery.queries が見つかりません');
-  }
-
-  const data = findResultsQuery(queries);
-  if (!data) {
-    throw new Error('data.results を持つクエリが見つかりません');
-  }
-
-  // 払戻（odds クエリ）を解決する ── 着順取得とは独立の追加処理
-  const oddsData   = findOddsData(queries);
+  // 払戻（odds 配列はトップレベル）を解決する ── 着順取得とは独立の追加処理
+  const oddsData   = data;
   const oddsIndex  = buildOddsIndex(oddsData);
   const payouts    = resolvePayouts(data, oddsIndex);
   const payout_3rentan = payouts.trifecta.length && payouts.trifecta[0].payoff != null
