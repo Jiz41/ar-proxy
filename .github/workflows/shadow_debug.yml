@@ -1,0 +1,60 @@
+name: Shadow Debug (temporary)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST full dummy payload
+        env:
+          SHADOW_ENDPOINT: ${{ secrets.SHADOW_ENDPOINT }}
+          SHADOW_TOKEN: ${{ secrets.SHADOW_TOKEN }}
+        run: |
+          cat > /tmp/payload.json <<'EOF'
+          {
+            "token": "__TOKEN__",
+            "kind": "predict",
+            "race": {
+              "race_id": "20260705_probe_0",
+              "date": "20260705",
+              "venue": "probe",
+              "race_no": 0,
+              "laps": "",
+              "road": "good",
+              "entries_n": 1,
+              "engine_ver": "debug",
+              "scoreStd": "",
+              "star": "",
+              "predA": 1, "predB": 2, "predC": 3, "predD": 4,
+              "recommend": "",
+              "bet_count": "",
+              "shadow_variant": "debug",
+              "shadow_bets": ""
+            },
+            "players": [
+              {
+                "race_id": "20260705_probe_0",
+                "carNum": 1,
+                "handicap": 0,
+                "trialTime": "",
+                "avgTrial": "",
+                "trialDev": "",
+                "st": "",
+                "stStd": "",
+                "recPoint": 0,
+                "dayProg": "",
+                "homeFlag": "",
+                "rainFlag": "",
+                "lScore_ranked": "",
+                "lFlag": "",
+                "totalScore": 0,
+                "predRank": 1
+              }
+            ]
+          }
+          EOF
+          sed -i "s/__TOKEN__/$SHADOW_TOKEN/" /tmp/payload.json
+          echo "--- response ---"
+          curl -sL -H 'Content-Type: application/json' --data @/tmp/payload.json "$SHADOW_ENDPOINT"; echo
