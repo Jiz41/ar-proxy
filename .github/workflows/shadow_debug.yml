@@ -7,54 +7,34 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: POST full dummy payload
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Call ArShadow.record directly in VM
         env:
           SHADOW_ENDPOINT: ${{ secrets.SHADOW_ENDPOINT }}
           SHADOW_TOKEN: ${{ secrets.SHADOW_TOKEN }}
         run: |
-          cat > /tmp/payload.json <<'EOF'
-          {
-            "token": "__TOKEN__",
-            "kind": "predict",
-            "race": {
-              "race_id": "20260705_probe_0",
-              "date": "20260705",
-              "venue": "probe",
-              "race_no": 0,
-              "laps": "",
-              "road": "good",
-              "entries_n": 1,
-              "engine_ver": "debug",
-              "scoreStd": "",
-              "star": "",
-              "predA": 1, "predB": 2, "predC": 3, "predD": 4,
-              "recommend": "",
-              "bet_count": "",
-              "shadow_variant": "debug",
-              "shadow_bets": ""
-            },
-            "players": [
-              {
-                "race_id": "20260705_probe_0",
-                "carNum": 1,
-                "handicap": 0,
-                "trialTime": "",
-                "avgTrial": "",
-                "trialDev": "",
-                "st": "",
-                "stStd": "",
-                "recPoint": 0,
-                "dayProg": "",
-                "homeFlag": "",
-                "rainFlag": "",
-                "lScore_ranked": "",
-                "lFlag": "",
-                "totalScore": 0,
-                "predRank": 1
-              }
-            ]
-          }
+          cat > /tmp/probe.js <<'EOF'
+          const loadVm = require('./shadow/vm_loader');
+          (async () => {
+            console.log('env endpoint set:', !!process.env.SHADOW_ENDPOINT, 'token set:', !!process.env.SHADOW_TOKEN);
+            const vmEnv = await loadVm();
+            const { ArShadow, window } = vmEnv;
+            console.log('record typeof:', typeof ArShadow.record);
+            const ctx = {
+              players: [{ carNum: 1, totalScore: 1, winRate: 0 }],
+              meta: { date: '20260705', venue: 'probe2', raceNo: 0, laps: '' },
+              roadCondition: 'good',
+              volatility: {},
+              bets: {},
+            };
+            console.log('--- calling record ---');
+            ArShadow.record(ctx);
+            console.log('--- record returned, waiting 10s for fetch to settle ---');
+            await new Promise(r => setTimeout(r, 10000));
+            console.log('--- done ---');
+          })().catch(e => { console.error('probe failed:', e); process.exit(1); });
           EOF
-          sed -i "s/__TOKEN__/$SHADOW_TOKEN/" /tmp/payload.json
-          echo "--- response ---"
-          curl -sL -H 'Content-Type: application/json' --data @/tmp/payload.json "$SHADOW_ENDPOINT"; echo
+          node /tmp/probe.js
