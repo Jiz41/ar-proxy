@@ -1,0 +1,23 @@
+name: Shadow Debug (temporary)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe GAS endpoint
+        env:
+          SHADOW_ENDPOINT: ${{ secrets.SHADOW_ENDPOINT }}
+          SHADOW_TOKEN: ${{ secrets.SHADOW_TOKEN }}
+        run: |
+          echo "endpoint set: $([ -n "$SHADOW_ENDPOINT" ] && echo yes || echo NO)"
+          echo "token set: $([ -n "$SHADOW_TOKEN" ] && echo yes || echo NO)"
+          echo "endpoint host: $(echo "$SHADOW_ENDPOINT" | cut -d/ -f1-3)"
+          echo "--- GET (doGet service info) ---"
+          curl -sL "$SHADOW_ENDPOINT" | head -c 500; echo
+          echo "--- POST wrong token (expect bad_token) ---"
+          curl -sL -H 'Content-Type: application/json' -d '{"token":"WRONG"}' "$SHADOW_ENDPOINT" | head -c 500; echo
+          echo "--- POST real token, empty payload ---"
+          curl -sL -H 'Content-Type: application/json' -d "{\"token\":\"$SHADOW_TOKEN\"}" "$SHADOW_ENDPOINT" | head -c 500; echo
