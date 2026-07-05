@@ -37,6 +37,9 @@ jobs:
             console.log('vm typeof localStorage:', t1);
             console.log('vm endpoint:', t2);
             console.log('vm token:', t3);
+            console.log('--- record source ---');
+            console.log(ArShadow.record.toString());
+            vm.runInContext("var _origFetch = fetch; fetch = function(u, o){ console.log('[probe] FETCH CALLED:', String(u).slice(0, 40)); return _origFetch(u, o); };", vmEnv.context);
             console.log('--- calling record ---');
             ArShadow.record(ctx);
             console.log('--- record returned, waiting 10s for fetch to settle ---');
