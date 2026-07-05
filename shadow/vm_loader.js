@@ -100,15 +100,16 @@ module.exports = async function loadVm() {
   };
 
   // ── fetch ──
-  // Node のグローバル fetch をそのまま注入する。
-  // ar_shadow.js は fetch(..., { mode: 'no-cors' }) を指定するが、no-cors は
-  // ブラウザ専用の概念であり Node の fetch では無視される。したがって
-  // サンドボックス内からの POST は実際に GAS へ送信される（本物の記録送信になる）。
+  // ar_shadow.js は fetch(..., { mode: 'no-cors' }) を指定する。ブラウザと違い
+  // Node の fetch（undici）は mode を無視せず処理し、no-cors 指定だと GAS への
+  // POST が永久に pending となり実際には送信されない（実測: mode 無しなら約1.5秒で
+  // 200、mode 有りは15秒でも timeout）。そこで opts から mode を除去してから
+  // Node の fetch へ渡すラッパーを注入し、POST が確実に GAS へ届くようにする。
   const sandbox = {
     window: windowStub,
     document: documentStub,
     localStorage: localStorageStub,
-    fetch: fetch,
+    fetch: (url, opts) => { const o = Object.assign({}, opts); delete o.mode; return fetch(url, o); },
     console: console,
     setTimeout: setTimeout,
     clearTimeout: clearTimeout,

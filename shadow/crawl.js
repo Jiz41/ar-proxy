@@ -263,7 +263,7 @@ async function main() {
 
   // 最後の record の POST が in-flight のままプロセス終了で中断されないよう、
   // 少しだけドレイン待ちを入れる（no-cors fire-and-forget のため await できない）。
-  if (!DRY_RUN) await sleep(2000);
+  if (!DRY_RUN) await sleep(8000);
 
   console.log('[crawl] 完了');
 }
