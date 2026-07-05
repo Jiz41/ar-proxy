@@ -30,6 +30,13 @@ jobs:
               volatility: {},
               bets: {},
             };
+            const vm = require('vm');
+            const t1 = vm.runInContext("typeof localStorage", vmEnv.context);
+            const t2 = vm.runInContext("(function(){ try { var v = localStorage.getItem('ronde_shadow_endpoint'); return v ? ('len=' + v.length + ' prefix=' + v.slice(0,30)) : String(v); } catch(e){ return 'THREW: ' + e.message; } })()", vmEnv.context);
+            const t3 = vm.runInContext("(function(){ try { var v = localStorage.getItem('ronde_shadow_token'); return v ? ('len=' + v.length) : String(v); } catch(e){ return 'THREW: ' + e.message; } })()", vmEnv.context);
+            console.log('vm typeof localStorage:', t1);
+            console.log('vm endpoint:', t2);
+            console.log('vm token:', t3);
             console.log('--- calling record ---');
             ArShadow.record(ctx);
             console.log('--- record returned, waiting 10s for fetch to settle ---');
