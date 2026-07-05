@@ -17,7 +17,7 @@ jobs:
           SHADOW_TOKEN: ${{ secrets.SHADOW_TOKEN }}
         run: |
           cat > /tmp/probe.js <<'EOF'
-          const loadVm = require('./shadow/vm_loader');
+          const loadVm = require(process.env.GITHUB_WORKSPACE + '/shadow/vm_loader');
           (async () => {
             console.log('env endpoint set:', !!process.env.SHADOW_ENDPOINT, 'token set:', !!process.env.SHADOW_TOKEN);
             const vmEnv = await loadVm();
