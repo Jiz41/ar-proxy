@@ -1,0 +1,31 @@
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[state] 旧ファイル削除: sent_20260706.json
+[crawl] 対象日=20260707 開催=2場
+[venue] hamamatsu kaisaiId=2026070504 day=3 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] hamamatsu_2026070504_3_1: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_8: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_9: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_10: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_11: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026070504_3_12: 試走タイム未掲載（次回cronで再判定）
+[venue] iizuka kaisaiId=2026070605 day=2 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] iizuka_2026070605_2_1: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=1
+[skip] iizuka_2026070605_2_2: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=2
+[skip] iizuka_2026070605_2_3: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=3
+[skip] iizuka_2026070605_2_4: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=4
+[skip] iizuka_2026070605_2_5: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=5
+[skip] iizuka_2026070605_2_6: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=6
+[skip] iizuka_2026070605_2_7: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=7
+[skip] iizuka_2026070605_2_8: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=8
+[skip] iizuka_2026070605_2_9: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=9
+[skip] iizuka_2026070605_2_10: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=10
+[skip] iizuka_2026070605_2_11: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=11
+[skip] iizuka_2026070605_2_12: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026070605&day=2&raceNo=12
+[crawl] 完了
