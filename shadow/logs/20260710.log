@@ -53,3 +53,21 @@
 [skip] kawaguchi_2026070902_2_11: 試走タイム未掲載（次回cronで再判定）
 [skip] kawaguchi_2026070902_2_12: 試走タイム未掲載（次回cronで再判定）
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260710 開催=2場
+[venue] iizuka kaisaiId=2026070605 day=5 races=[]
+[venue] kawaguchi kaisaiId=2026070902 day=2 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] kawaguchi_2026070902_2_1: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_2: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_3: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_4: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_5: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_6: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_7: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_8: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_9: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_10: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_11: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_12: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
