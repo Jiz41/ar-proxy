@@ -866,3 +866,34 @@
 [skip] kawaguchi_2026070902_2_11: 送信済み
 [skip] kawaguchi_2026070902_2_12: 送信済み
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260710 開催=2場
+[venue] iizuka kaisaiId=2026070605 day=5 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] iizuka_2026070605_5_1: 送信済み
+[skip] iizuka_2026070605_5_2: 送信済み
+[skip] iizuka_2026070605_5_3: 送信済み
+[skip] iizuka_2026070605_5_4: 送信済み
+[sent] iizuka_2026070605_5_5
+[RONDE shadow] sent: 20260710_iizuka_5
+[skip] iizuka_2026070605_5_6: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026070605_5_7: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026070605_5_8: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026070605_5_9: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026070605_5_10: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026070605_5_11: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026070605_5_12: 試走タイム未掲載（次回cronで再判定）
+[venue] kawaguchi kaisaiId=2026070902 day=2 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] kawaguchi_2026070902_2_1: 送信済み
+[skip] kawaguchi_2026070902_2_2: 送信済み
+[skip] kawaguchi_2026070902_2_3: 送信済み
+[skip] kawaguchi_2026070902_2_4: 送信済み
+[skip] kawaguchi_2026070902_2_5: 送信済み
+[skip] kawaguchi_2026070902_2_6: 送信済み
+[skip] kawaguchi_2026070902_2_7: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026070902_2_8: 送信済み
+[skip] kawaguchi_2026070902_2_9: 送信済み
+[skip] kawaguchi_2026070902_2_10: 送信済み
+[skip] kawaguchi_2026070902_2_11: 送信済み
+[skip] kawaguchi_2026070902_2_12: 送信済み
+[crawl] 完了
