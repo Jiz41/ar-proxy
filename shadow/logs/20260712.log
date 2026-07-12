@@ -737,3 +737,34 @@
 [skip] isesaki_2026071103_2_11: 試走タイム未掲載（次回cronで再判定）
 [skip] isesaki_2026071103_2_12: 試走タイム未掲載（次回cronで再判定）
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260712 開催=2場
+[venue] kawaguchi kaisaiId=2026070902 day=4 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] kawaguchi_2026070902_4_1: 送信済み
+[skip] kawaguchi_2026070902_4_2: 送信済み
+[skip] kawaguchi_2026070902_4_3: 送信済み
+[skip] kawaguchi_2026070902_4_4: 送信済み
+[skip] kawaguchi_2026070902_4_5: 送信済み
+[skip] kawaguchi_2026070902_4_6: 送信済み
+[skip] kawaguchi_2026070902_4_7: 送信済み
+[skip] kawaguchi_2026070902_4_8: 送信済み
+[skip] kawaguchi_2026070902_4_9: 送信済み
+[skip] kawaguchi_2026070902_4_10: 送信済み
+[skip] kawaguchi_2026070902_4_11: 送信済み
+[skip] kawaguchi_2026070902_4_12: 送信済み
+[venue] isesaki kaisaiId=2026071103 day=2 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] isesaki_2026071103_2_1: 送信済み
+[skip] isesaki_2026071103_2_2: 送信済み
+[skip] isesaki_2026071103_2_3: 送信済み
+[skip] isesaki_2026071103_2_4: 送信済み
+[skip] isesaki_2026071103_2_5: 送信済み
+[skip] isesaki_2026071103_2_6: 送信済み
+[sent] isesaki_2026071103_2_7
+[RONDE shadow] sent: 20260712_isesaki_7
+[skip] isesaki_2026071103_2_8: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026071103_2_9: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026071103_2_10: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026071103_2_11: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026071103_2_12: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
