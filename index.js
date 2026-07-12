@@ -47,4 +47,8 @@ app.get('/result', async (req, res) => {
   }
 });
 
+// ボートレース戸田 直前情報中継（華耀旋臨 自在律:Barcarolle 用、boat_beforeinfo.js参照）
+const { handleBoatBeforeInfo } = require('./boat_beforeinfo');
+app.get('/boat/beforeinfo', handleBoatBeforeInfo);
+
 app.listen(port, () => { console.log(`Server is running on port ${port}`); });
