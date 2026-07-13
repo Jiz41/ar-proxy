@@ -1113,3 +1113,42 @@
 [skip] sanyo_2026071306_1_11: 送信済み
 [skip] sanyo_2026071306_1_12: 送信済み
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260713 開催=3場
+[venue] isesaki kaisaiId=2026071103 day=3 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] isesaki_2026071103_3_1: 送信済み
+[skip] isesaki_2026071103_3_2: 送信済み
+[skip] isesaki_2026071103_3_3: 送信済み
+[skip] isesaki_2026071103_3_4: 送信済み
+[skip] isesaki_2026071103_3_5: 送信済み
+[skip] isesaki_2026071103_3_6: 送信済み
+[skip] isesaki_2026071103_3_7: 送信済み
+[skip] isesaki_2026071103_3_8: 送信済み
+[skip] isesaki_2026071103_3_9: 送信済み
+[skip] isesaki_2026071103_3_10: 送信済み
+[skip] isesaki_2026071103_3_11: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026071103_3_12: 試走タイム未掲載（次回cronで再判定）
+[venue] iizuka kaisaiId=2026071305 day=1 races=[1,2,3,4,5,6,7,8]
+[skip] iizuka_2026071305_1_1: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_1_2: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_1_3: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_1_4: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_1_5: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_1_6: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_1_7: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_1_8: 試走タイム未掲載（次回cronで再判定）
+[venue] sanyo kaisaiId=2026071306 day=1 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] sanyo_2026071306_1_1: 送信済み
+[skip] sanyo_2026071306_1_2: 送信済み
+[skip] sanyo_2026071306_1_3: 送信済み
+[skip] sanyo_2026071306_1_4: 送信済み
+[skip] sanyo_2026071306_1_5: 送信済み
+[skip] sanyo_2026071306_1_6: 送信済み
+[skip] sanyo_2026071306_1_7: 送信済み
+[skip] sanyo_2026071306_1_8: 送信済み
+[skip] sanyo_2026071306_1_9: 送信済み
+[skip] sanyo_2026071306_1_10: 送信済み
+[skip] sanyo_2026071306_1_11: 送信済み
+[skip] sanyo_2026071306_1_12: 送信済み
+[crawl] 完了
