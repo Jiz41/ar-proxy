@@ -129,6 +129,12 @@ async function main() {
   console.log(`[crawl] 開始 dryRun=${DRY_RUN}`);
   const today = getTodayJST();
 
+  // endpoint/token 未設定だと ar_shadow.js が何も送らないままサイレントスキップし、
+  // 「送信済み」扱いでシートから欠落するため、本番実行では起動時に fail-fast する。
+  if (!DRY_RUN && (!process.env.SHADOW_ENDPOINT || !process.env.SHADOW_TOKEN)) {
+    throw new Error('SHADOW_ENDPOINT / SHADOW_TOKEN が未設定です（record 送信不可のため中断）');
+  }
+
   // 1. サンドボックスロード（HF から本番ロジックを取得）
   const vmEnv = await loadVm();
   const { ArAdapter, ArRonde, ArShadow } = vmEnv;
@@ -245,13 +251,26 @@ async function main() {
         );
       } else {
         try {
-          // endpoint/token 未設定ならサイレントスキップ（何も送信されない）。
-          // fetch は no-cors 相当の fire-and-forget のため送信成否は確認できない。
-          // record 呼び出しをもって「送信した」とみなし state に記録する。
+          // record 自体は fire-and-forget だが、vm_loader が fetch をフックしているので
+          // drainFetches() で POST の完了と HTTP ステータスを確認できる。
+          // 送信が確認できたレースだけ state に記録し、失敗分は次回 cron で再送する。
           ArShadow.record(ctx);
-          sent.add(raceKey);
-          saveSent(today, sent);
-          console.log(`[sent] ${raceKey}`);
+          const results = await vmEnv.drainFetches();
+          const failed = results.filter(
+            r => r.status === 'rejected' || (r.value && !r.value.ok)
+          );
+          if (results.length === 0) {
+            console.log(`[error] ${raceKey}: record がPOSTを発行しませんでした（endpoint/token 設定を確認）`);
+          } else if (failed.length > 0) {
+            const reason = failed
+              .map(r => (r.status === 'rejected' ? r.reason && r.reason.message : `HTTP ${r.value.status}`))
+              .join(', ');
+            console.log(`[error] ${raceKey}: record送信失敗 (${reason}) 次回cronで再送`);
+          } else {
+            sent.add(raceKey);
+            saveSent(today, sent);
+            console.log(`[sent] ${raceKey}`);
+          }
         } catch (e) {
           console.log(`[error] ${raceKey}: record失敗 ${e.message}`);
         }
@@ -261,10 +280,7 @@ async function main() {
     }
   }
 
-  // 最後の record の POST が in-flight のままプロセス終了で中断されないよう、
-  // 少しだけドレイン待ちを入れる（no-cors fire-and-forget のため await できない）。
-  if (!DRY_RUN) await sleep(8000);
-
+  // POST は drainFetches() で毎回 await 済みのため、終了前のドレイン待ちは不要。
   console.log('[crawl] 完了');
 }
 
