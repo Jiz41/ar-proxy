@@ -29,12 +29,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Run shadow crawl
         env:
@@ -55,5 +55,9 @@ jobs:
             echo "state に変更なし"
           else
             git commit -m "chore(shadow): update sent state [skip ci]"
-            git push
+            # 多重起動の別runが先にpushしていると rejected になるため、rebaseして再試行
+            for i in 1 2 3; do
+              git push && break
+              git pull --rebase origin main
+            done
           fi
