@@ -105,11 +105,21 @@ module.exports = async function loadVm() {
   // POST が永久に pending となり実際には送信されない（実測: mode 無しなら約1.5秒で
   // 200、mode 有りは15秒でも timeout）。そこで opts から mode を除去してから
   // Node の fetch へ渡すラッパーを注入し、POST が確実に GAS へ届くようにする。
+  // サンドボックス内から発行された fetch の Promise を貯めておき、
+  // 呼び出し側（crawl.js）が drainFetches() で完了と HTTP ステータスを確認できるようにする。
+  // ar_shadow.js の record は fire-and-forget で送信成否を返さないため、ここで補う。
+  const pendingFetches = [];
   const sandbox = {
     window: windowStub,
     document: documentStub,
     localStorage: localStorageStub,
-    fetch: (url, opts) => { const o = Object.assign({}, opts); delete o.mode; return fetch(url, o); },
+    fetch: (url, opts) => {
+      const o = Object.assign({}, opts);
+      delete o.mode;
+      const p = fetch(url, o);
+      pendingFetches.push(p);
+      return p;
+    },
     console: console,
     setTimeout: setTimeout,
     clearTimeout: clearTimeout,
@@ -139,5 +149,10 @@ module.exports = async function loadVm() {
     );
   }
 
-  return { window: windowStub, context, ArRonde, ArAdapter, ArShadow, engineVer };
+  // 直近に発行された fetch をすべて待ち、settled 結果の配列を返す（貯めた分はクリア）。
+  async function drainFetches() {
+    return Promise.allSettled(pendingFetches.splice(0));
+  }
+
+  return { window: windowStub, context, ArRonde, ArAdapter, ArShadow, engineVer, drainFetches };
 };
