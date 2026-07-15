@@ -887,3 +887,30 @@
 [skip] sanyo_2026071306_3_11: 送信済み
 [skip] sanyo_2026071306_3_12: 送信済み
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260715 開催=2場
+[venue] iizuka kaisaiId=2026071305 day=3 races=[1,2,3,4,5,6,7,8]
+[RONDE shadow] sent: 20260715_iizuka_1
+[sent] iizuka_2026071305_3_1
+[skip] iizuka_2026071305_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026071305_3_8: 試走タイム未掲載（次回cronで再判定）
+[venue] sanyo kaisaiId=2026071306 day=3 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] sanyo_2026071306_3_1: 送信済み
+[skip] sanyo_2026071306_3_2: 送信済み
+[skip] sanyo_2026071306_3_3: 送信済み
+[skip] sanyo_2026071306_3_4: 送信済み
+[skip] sanyo_2026071306_3_5: 送信済み
+[skip] sanyo_2026071306_3_6: 送信済み
+[skip] sanyo_2026071306_3_7: 送信済み
+[skip] sanyo_2026071306_3_8: 送信済み
+[skip] sanyo_2026071306_3_9: 送信済み
+[skip] sanyo_2026071306_3_10: 送信済み
+[skip] sanyo_2026071306_3_11: 送信済み
+[skip] sanyo_2026071306_3_12: 送信済み
+[crawl] 完了
