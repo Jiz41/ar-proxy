@@ -311,3 +311,29 @@
 [skip] sanyo_2026071606_1_7: 試走タイム未掲載（次回cronで再判定）
 [skip] sanyo_2026071606_1_8: 試走タイム未掲載（次回cronで再判定）
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260716 開催=2場
+[venue] kawaguchi kaisaiId=2026071602 day=1 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] kawaguchi_2026071602_1_1: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_2: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_3: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_4: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_5: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_6: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_7: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_8: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_9: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_10: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_11: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_1_12: 試走タイム未掲載（次回cronで再判定）
+[venue] sanyo kaisaiId=2026071606 day=1 races=[1,2,3,4,5,6,7,8]
+[skip] sanyo_2026071606_1_1: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_1_2: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_1_3: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_1_4: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_1_5: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_1_6: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_1_7: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_1_8: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
