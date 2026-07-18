@@ -1209,3 +1209,40 @@
 [skip] hamamatsu_2026071804_1_8: 送信済み
 [skip] hamamatsu_2026071804_1_9: 送信済み
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260718 開催=3場
+[venue] kawaguchi kaisaiId=2026071602 day=3 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] kawaguchi_2026071602_3_1: 送信済み
+[skip] kawaguchi_2026071602_3_2: 送信済み
+[skip] kawaguchi_2026071602_3_3: 送信済み
+[skip] kawaguchi_2026071602_3_4: 送信済み
+[skip] kawaguchi_2026071602_3_5: 送信済み
+[skip] kawaguchi_2026071602_3_6: 送信済み
+[skip] kawaguchi_2026071602_3_7: 送信済み
+[skip] kawaguchi_2026071602_3_8: 送信済み
+[skip] kawaguchi_2026071602_3_9: 送信済み
+[skip] kawaguchi_2026071602_3_10: 送信済み
+[skip] kawaguchi_2026071602_3_11: 送信済み
+[skip] kawaguchi_2026071602_3_12: 送信済み
+[venue] sanyo kaisaiId=2026071606 day=3 races=[1,2,3,4,5,6,7,8]
+[RONDE shadow] sent: 20260718_sanyo_1
+[sent] sanyo_2026071606_3_1
+[skip] sanyo_2026071606_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026071606_3_8: 試走タイム未掲載（次回cronで再判定）
+[venue] hamamatsu kaisaiId=2026071804 day=1 races=[1,2,3,4,5,6,7,8,9]
+[skip] hamamatsu_2026071804_1_1: 送信済み
+[skip] hamamatsu_2026071804_1_2: 送信済み
+[skip] hamamatsu_2026071804_1_3: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_1_4: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_1_5: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_1_6: 送信済み
+[skip] hamamatsu_2026071804_1_7: 送信済み
+[skip] hamamatsu_2026071804_1_8: 送信済み
+[skip] hamamatsu_2026071804_1_9: 送信済み
+[crawl] 完了
