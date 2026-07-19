@@ -1,0 +1,28 @@
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[state] 旧ファイル削除: sent_20260719.json
+[crawl] 対象日=20260720 開催=2場
+[venue] kawaguchi kaisaiId=2026071602 day=5 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] kawaguchi_2026071602_5_1: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_2: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_3: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_4: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_5: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_6: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_7: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_8: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_9: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_10: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_11: 試走タイム未掲載（次回cronで再判定）
+[skip] kawaguchi_2026071602_5_12: 試走タイム未掲載（次回cronで再判定）
+[venue] hamamatsu kaisaiId=2026071804 day=3 races=[1,2,3,4,5,6,7,8,9]
+[skip] hamamatsu_2026071804_3_1: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_8: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026071804_3_9: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
