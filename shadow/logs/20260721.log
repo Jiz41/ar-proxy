@@ -849,3 +849,30 @@
 [skip] sanyo_2026072106_1_11: 試走タイム未掲載（次回cronで再判定）
 [skip] sanyo_2026072106_1_12: 送信済み
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260721 開催=2場
+[venue] isesaki kaisaiId=2026072103 day=1 races=[1,2,3,4,5,6,7,8]
+[skip] isesaki_2026072103_1_1: 送信済み
+[skip] isesaki_2026072103_1_2: 送信済み
+[skip] isesaki_2026072103_1_3: 送信済み
+[skip] isesaki_2026072103_1_4: 送信済み
+[skip] isesaki_2026072103_1_5: 送信済み
+[skip] isesaki_2026072103_1_6: 送信済み
+[skip] isesaki_2026072103_1_7: 送信済み
+[RONDE shadow] sent: 20260721_isesaki_8
+[sent] isesaki_2026072103_1_8
+[venue] sanyo kaisaiId=2026072106 day=1 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] sanyo_2026072106_1_1: 送信済み
+[skip] sanyo_2026072106_1_2: 送信済み
+[skip] sanyo_2026072106_1_3: 送信済み
+[skip] sanyo_2026072106_1_4: 送信済み
+[skip] sanyo_2026072106_1_5: 送信済み
+[skip] sanyo_2026072106_1_6: 送信済み
+[skip] sanyo_2026072106_1_7: 送信済み
+[skip] sanyo_2026072106_1_8: 送信済み
+[skip] sanyo_2026072106_1_9: 送信済み
+[skip] sanyo_2026072106_1_10: 送信済み
+[skip] sanyo_2026072106_1_11: 試走タイム未掲載（次回cronで再判定）
+[skip] sanyo_2026072106_1_12: 送信済み
+[crawl] 完了
