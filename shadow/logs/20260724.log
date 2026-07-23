@@ -50,3 +50,20 @@
 [skip] iizuka_2026072405_1_11: 試走タイム未掲載（次回cronで再判定）
 [skip] iizuka_2026072405_1_12: 試走タイム未掲載（次回cronで再判定）
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260724 開催=1場
+[venue] iizuka kaisaiId=2026072405 day=1 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] iizuka_2026072405_1_1: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_2: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_3: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_4: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_5: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_6: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_7: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_8: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_9: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_10: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_11: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_12: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
