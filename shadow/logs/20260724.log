@@ -553,3 +553,21 @@
 [skip] iizuka_2026072405_1_11: 送信済み
 [skip] iizuka_2026072405_1_12: /race取得失敗 HTTP 500 https://ar-proxy.onrender.com/race?venue=iizuka&kaisaiId=2026072405&day=1&raceNo=12
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260724 開催=1場
+[venue] iizuka kaisaiId=2026072405 day=1 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] iizuka_2026072405_1_1: 送信済み
+[skip] iizuka_2026072405_1_2: 送信済み
+[skip] iizuka_2026072405_1_3: 送信済み
+[skip] iizuka_2026072405_1_4: 送信済み
+[skip] iizuka_2026072405_1_5: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072405_1_6: 送信済み
+[skip] iizuka_2026072405_1_7: 送信済み
+[skip] iizuka_2026072405_1_8: 送信済み
+[skip] iizuka_2026072405_1_9: 送信済み
+[skip] iizuka_2026072405_1_10: 送信済み
+[skip] iizuka_2026072405_1_11: 送信済み
+[RONDE shadow] sent: 20260724_iizuka_12
+[sent] iizuka_2026072405_1_12
+[crawl] 完了
