@@ -228,3 +228,39 @@
 [skip] hamamatsu_2026072904_1_11: 試走タイム未掲載（次回cronで再判定）
 [skip] hamamatsu_2026072904_1_12: 試走タイム未掲載（次回cronで再判定）
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260729 開催=3場
+[venue] isesaki kaisaiId=2026072703 day=3 races=[1,2,3,4,5,6,7,8]
+[skip] isesaki_2026072703_3_1: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026072703_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026072703_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026072703_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026072703_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026072703_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026072703_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026072703_3_8: 試走タイム未掲載（次回cronで再判定）
+[venue] iizuka kaisaiId=2026072705 day=3 races=[1,2,3,4,5,6,7,8]
+[skip] iizuka_2026072705_3_1: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072705_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072705_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072705_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072705_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072705_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072705_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026072705_3_8: 試走タイム未掲載（次回cronで再判定）
+[venue] hamamatsu kaisaiId=2026072904 day=1 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[RONDE shadow] sent: 20260729_hamamatsu_1
+[sent] hamamatsu_2026072904_1_1
+[skip] hamamatsu_2026072904_1_2: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_3: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_4: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_5: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_6: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_7: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_8: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_9: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_10: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_11: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026072904_1_12: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
