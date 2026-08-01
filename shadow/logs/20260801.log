@@ -1325,3 +1325,40 @@
 [skip] kawaguchi_2026080102_1_7: 送信済み
 [skip] kawaguchi_2026080102_1_8: 送信済み
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260801 開催=3場
+[venue] hamamatsu kaisaiId=2026072904 day=4 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] hamamatsu_2026072904_4_1: 送信済み
+[skip] hamamatsu_2026072904_4_2: 送信済み
+[skip] hamamatsu_2026072904_4_3: 送信済み
+[skip] hamamatsu_2026072904_4_4: 送信済み
+[skip] hamamatsu_2026072904_4_5: 送信済み
+[skip] hamamatsu_2026072904_4_6: 送信済み
+[skip] hamamatsu_2026072904_4_7: 送信済み
+[skip] hamamatsu_2026072904_4_8: 送信済み
+[skip] hamamatsu_2026072904_4_9: 送信済み
+[skip] hamamatsu_2026072904_4_10: 送信済み
+[skip] hamamatsu_2026072904_4_11: 送信済み
+[skip] hamamatsu_2026072904_4_12: 送信済み
+[venue] sanyo kaisaiId=2026073006 day=3 races=[1,2,3,4,5,6,7,8,9]
+[skip] sanyo_2026073006_3_1: 送信済み
+[skip] sanyo_2026073006_3_2: 送信済み
+[skip] sanyo_2026073006_3_3: 送信済み
+[skip] sanyo_2026073006_3_4: 送信済み
+[skip] sanyo_2026073006_3_5: 送信済み
+[skip] sanyo_2026073006_3_6: 送信済み
+[skip] sanyo_2026073006_3_7: 送信済み
+[skip] sanyo_2026073006_3_8: 送信済み
+[RONDE shadow] sent: 20260801_sanyo_9
+[sent] sanyo_2026073006_3_9
+[venue] kawaguchi kaisaiId=2026080102 day=1 races=[1,2,3,4,5,6,7,8]
+[skip] kawaguchi_2026080102_1_1: 送信済み
+[skip] kawaguchi_2026080102_1_2: 送信済み
+[skip] kawaguchi_2026080102_1_3: 送信済み
+[skip] kawaguchi_2026080102_1_4: 送信済み
+[skip] kawaguchi_2026080102_1_5: 送信済み
+[skip] kawaguchi_2026080102_1_6: 送信済み
+[skip] kawaguchi_2026080102_1_7: 送信済み
+[skip] kawaguchi_2026080102_1_8: 送信済み
+[crawl] 完了
