@@ -14,3 +14,8 @@
 [crawl] 対象日=20260810 開催=1場
 [venue] iizuka kaisaiId=2026080805 day=3 races=[]
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260810 開催=1場
+[venue] iizuka kaisaiId=2026080805 day=3 races=[]
+[crawl] 完了
