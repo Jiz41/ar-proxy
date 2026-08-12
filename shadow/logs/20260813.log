@@ -1,0 +1,28 @@
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[state] 旧ファイル削除: sent_20260812.json
+[crawl] 対象日=20260813 開催=2場
+[venue] isesaki kaisaiId=2026081103 day=3 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] isesaki_2026081103_3_1: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_8: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_9: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_10: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_11: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_3_12: 試走タイム未掲載（次回cronで再判定）
+[venue] hamamatsu kaisaiId=2026081104 day=3 races=[1,2,3,4,5,6,7,8,9]
+[skip] hamamatsu_2026081104_3_1: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_8: 試走タイム未掲載（次回cronで再判定）
+[skip] hamamatsu_2026081104_3_9: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
