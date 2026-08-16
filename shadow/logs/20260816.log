@@ -1062,3 +1062,29 @@
 [skip] iizuka_2026081405_3_7: 試走タイム未掲載（次回cronで再判定）
 [skip] iizuka_2026081405_3_8: 試走タイム未掲載（次回cronで再判定）
 [crawl] 完了
+[crawl] 開始 dryRun=false
+[crawl] ロジックロード完了 engine_ver=1.1.1
+[crawl] 対象日=20260816 開催=2場
+[venue] isesaki kaisaiId=2026081103 day=6 races=[1,2,3,4,5,6,7,8,9,10,11,12]
+[skip] isesaki_2026081103_6_1: 送信済み
+[skip] isesaki_2026081103_6_2: 送信済み
+[skip] isesaki_2026081103_6_3: 送信済み
+[skip] isesaki_2026081103_6_4: 送信済み
+[skip] isesaki_2026081103_6_5: 送信済み
+[skip] isesaki_2026081103_6_6: 送信済み
+[skip] isesaki_2026081103_6_7: 送信済み
+[skip] isesaki_2026081103_6_8: 試走タイム未掲載（次回cronで再判定）
+[skip] isesaki_2026081103_6_9: 送信済み
+[skip] isesaki_2026081103_6_10: 送信済み
+[skip] isesaki_2026081103_6_11: 送信済み
+[skip] isesaki_2026081103_6_12: 送信済み
+[venue] iizuka kaisaiId=2026081405 day=3 races=[1,2,3,4,5,6,7,8]
+[skip] iizuka_2026081405_3_1: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026081405_3_2: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026081405_3_3: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026081405_3_4: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026081405_3_5: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026081405_3_6: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026081405_3_7: 試走タイム未掲載（次回cronで再判定）
+[skip] iizuka_2026081405_3_8: 試走タイム未掲載（次回cronで再判定）
+[crawl] 完了
